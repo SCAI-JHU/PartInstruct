@@ -1,0 +1,88 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# C extensions
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# PyCharm / VS Code / Jupyter
+.idea/
+.vscode/
+.ipynb_checkpoints/
+
+# Local configuration files
+*.env
+*.env.local
+.envrc
+*.ini
+
+# Ignore large model or data files
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.tfrecord
+*.npz
+*.npy
+*.zip
+*.tar.gz
+
+# Ignore logs
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
