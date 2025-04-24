@@ -20,7 +20,7 @@ obj_classes: null
 task_type: null
 split: null
 
-output_dir: "/scratch/tshu2/zhan47/lgm_baselines/outputs/train_dp3_multi_task/dp3_h100-job-21352-09-08_09-32-51"
+output_dir: "path/to/output"
 starting_epoch: 0
 
 seq_length: 16
@@ -30,7 +30,7 @@ n_action_steps: 8
 obs_as_global_cond: true
 
 num_iterations: 10
-ckpt_path: "/home/yfang52/scratch/zhan47/lgm_baselines/outputs/train_dp3_kitchenpot/dp3_h100_kitchenpot-job-21677-09-12_03-51-53/checkpoints/2900/latest.ckpt"
+ckpt_path: "path/to/ckpt"
 epoch: 0
 max_epoch: null
 
@@ -69,7 +69,7 @@ task:
     n_obs_steps: ${n_obs_steps}
     n_envs: 16
     n_vis: 16
-    env_config: "/home/jimmyhan/Desktop/lgplm/PartInstruct/Final_release/PartInstruct/PartInstruct/baselines/evaluation/config/env/${env.config_name}.yaml"
+    env_config: "PartInstruct/PartInstruct/baselines/evaluation/config/env/${env.config_name}.yaml"
     gui: false
     past_action: false
 
