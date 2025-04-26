@@ -1,3 +1,3 @@
 # lgplm_sim
 
-git submodule update --init --recursive
+git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
