@@ -100,7 +100,6 @@ class BulletEnv(gym.Env):
         self.use_pcd = False
         self.use_part_mask_gt = False
         self.use_part_pcd_gt = False
-        self.pcd_size = 1024
 
         self.action_list = []
 
@@ -451,9 +450,12 @@ class BulletEnv(gym.Env):
         all_obs, all_reward, all_done, all_info = [], [], [], []
 
         try:
-            path = planning_fn(self.world, self.obj.uid, q_cur, trgt_pose, grasp_pose=grasp_pose)
+            path = planning_fn(self, self.obj.uid, q_cur, trgt_pose, grasp_pose=grasp_pose)
         except:
             print("Planning failed!")
+            return all_obs, all_reward, all_done, all_info
+
+        if path is None:
             return all_obs, all_reward, all_done, all_info
 
         saved_world.restore()

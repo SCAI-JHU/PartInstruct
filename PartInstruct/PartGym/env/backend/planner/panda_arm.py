@@ -16,14 +16,8 @@ class PandaArm(object):
     NUM_DOFS = 7
 
     # restposes 
-    # HOME_JOINT_POS=[0.920, 0.086, 0.413, -2.163, -0.051, 2.242, -0.164, 0.04, 0.04] 
-    # HOME_JOINT_POS=[0.920, 0.286, 0.413, -1.763, -0.051, 2.242, -0.164, 0.04, 0.04] 
-    # HOME_JOINT_POS=[0.920, 0.286, 0.413, -1.963, -0.051, 2.242, -0.164, 0.04, 0.04] 
-    # HOME_JOINT_POS=[0.920, 0.286, 0.713, -1.963, -0.051, 2.042, -0.164, 0.04, 0.04] 
     HOME_JOINT_POS=[0.920, 0.286, 0.713, -1.963, -0.051, 2.042, -0.164, 0.04, 0.04] 
 
-    # BASE_ORN = [0.0, 0.0, 0.707, 0.707] # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
-    # BASE_ORN = [0.0, 0.0, 0.38268, 0.92388] # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
     BASE_ORN = [0.0, 0.0, 0.0, 1.0] # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
 
     # lower limits
@@ -157,6 +151,28 @@ class PandaArm(object):
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, self.GRIPPER_OPEN_JOINT_POS, force=5000)
             self.world.step()
     
+    def set_joint_states(self, joint_states: list):
+        index = 0
+        for j in range(self.bullet_client.getNumJoints(self.panda)):
+            # self.bullet_client.changeDynamics(self.panda, j, linearDamping=0, angularDamping=0)
+            info = self.bullet_client.getJointInfo(self.panda, j)
+            #print("info=",info)
+            jointType = info[2]
+            if (jointType == self.bullet_client.JOINT_PRISMATIC):
+                self.bullet_client.resetJointState(self.panda, j, joint_states[index], targetVelocity=0,) 
+                index=index+1
+            if (jointType == self.bullet_client.JOINT_REVOLUTE):
+                self.bullet_client.resetJointState(self.panda, j, joint_states[index], targetVelocity=0,) 
+                index=index+1
+
+        for i in range(self.NUM_DOFS):
+            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, joint_states[i], positionGain=0.03, force=10 * 240.)
+            self.update_wrist_camera_extrinsic()
+
+        for i in [9,10]:
+            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, joint_states[i-2], force=5000)
+
+
     def check_collision(self, uid_list: list, start_link_name="panda_link1", end_link_name="panda_rightfinger"):
         # Get the indices of the start and end links
         num_joints = self.world.p.getNumJoints(self.panda)
@@ -295,9 +311,11 @@ class PandaArm(object):
         angular_velocity = np.dot(R, angular_velocity_ee)
         return linear_velocity, angular_velocity
     
-    def get_joint_states(self):
+    def get_joint_states(self, return_all=False):
         joint_states_result = list(self.world.p.getJointStates(self.panda, range(self.NUM_DOFS)))
         current_joint_states = [joint_states[0] for joint_states in joint_states_result]
+        if return_all:
+            current_joint_states += 2*[self.get_gripper_state()]
         return current_joint_states
     
     def get_gripper_state(self):
