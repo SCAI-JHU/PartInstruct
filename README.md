@@ -21,7 +21,7 @@ Go to the dataset page: https://huggingface.co/datasets/SCAI-JHU/PartInstruct. L
 ```bash
 huggingface-cli login
 ```
-Enter your password. You can now download the assets.
+Enter your password. You can now download the assets. The following commands download and set up the assets under a created data/ directory.
 
 ```bash
 huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "*.json" "assets.zip"
