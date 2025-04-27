@@ -46,3 +46,9 @@ Then run the following command:
 python run_code_as_policies.py
 ```
 
+### Run evalutaion of a baseline
+
+```
+PartInstruct/scripts/eval_dp_mask.sh
+```
+

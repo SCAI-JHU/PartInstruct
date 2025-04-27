@@ -61,12 +61,8 @@ class Evaluator(BaseWorkspace):
             task_types = list(self.dataset_meta[obj_class][split].keys()) 
             if '11' in task_types:
                 task_types.remove('11')
-            k = len(task_types)
-            if k < self.n_envs:
-                random.seed(42)
-                additional_samples = random.choices(task_types, k=self.n_envs-k)
-                task_types.extend(additional_samples)
-            return task_types
+            task_samples = random.choices(task_types, k=self.n_envs)
+            return task_samples
 
     def run(self):
         cfg = copy.deepcopy(self.cfg)
