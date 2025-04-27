@@ -24,8 +24,7 @@ huggingface-cli login
 Enter your password. You can now download the assets.
 
 ```bash
-huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "*.json"
-huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "assets.zip"
+huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "*.json" "assets.zip"
 unzip ./data/assets.zip -d ./data/
 mv data/assets/* data/
 rm -r data/assets*
