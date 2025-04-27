@@ -41,7 +41,7 @@ obj_scale = 0.1
 env = BulletEnv(config_path=config_path, gui=True, record=True)
 checker = OracleChecker(env)
 obj_class = "mug"
-obj_id = "8594"
+obj_id = "8555"
 chain_params = [
     {
         "skill_name": "grasp_obj",
