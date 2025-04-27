@@ -23,7 +23,7 @@ from omegaconf import OmegaConf
 from PartInstruct.PartGym.env.backend.utils.semantic_parser import SpatialSampler, SemanticParser
 from typing import Union, List, Dict, Tuple, Optional, Literal
 
-from pybullet_tools.franka_primitives import (
+from third_party.pybullet_planning.pybullet_tools.franka_primitives import (
     BodyPose, 
     BodyConf, 
     WorldSaver,
@@ -41,10 +41,11 @@ from pybullet_tools.franka_primitives import (
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 State = collections.namedtuple("State", ["tsdf", "pc"])
 
-root_directory = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(root_directory, "config", "config.yaml")
+root_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+config_path = os.path.join(root_directory, "PartInstruct", "PartGym", "config", "config.yaml")
 ## Open and read the YAML file
 config = OmegaConf.load(config_path)
+config.data_root = os.path.join(root_directory, "data")
 data_root = config.data_root
 
 # Initialize the output directory and other parameters

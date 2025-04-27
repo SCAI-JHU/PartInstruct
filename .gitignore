@@ -79,3 +79,5 @@ dmypy.json
 # OS specific
 .DS_Store
 Thumbs.db
+data/
+output/

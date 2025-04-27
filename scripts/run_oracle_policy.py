@@ -28,9 +28,11 @@ from PartInstruct.PartGym.env.backend.utils.semantic_parser import SpatialSample
 from typing import Union, List, Dict, Tuple, Optional, Literal
 
 # Setup paths and meta
-root_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "partgym")
-config_path = os.path.join(root_directory, "config", "config_oracle.yaml")
+root_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+planner_directory = os.path.join(root_directory, "PartInstruct", "PartGym")
+config_path = os.path.join(planner_directory, "config", "config_oracle.yaml")
 config = OmegaConf.load(config_path)
+config.data_root = os.path.join(root_directory, "data")
 data_root = config.data_root
 meta_path = config.meta_path
 

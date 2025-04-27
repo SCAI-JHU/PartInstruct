@@ -7,6 +7,9 @@ setup(
     author='Yifan Yin; Zhengtao Han',
     author_email='yyin34@jhu.edu; zhan47@jhu.edu',
     packages=find_packages(),
+    package_dir={
+        "pybullet_planning": "third_party/pybullet_planning",
+    },
     python_requires='>=3.8',
     classifiers=[
         'Development Status :: 3 - Alpha',

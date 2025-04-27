@@ -1,4 +1,4 @@
-name: part_instruct
+name: part_instruct_new
 channels:
   - pytorch3d
   - pytorch

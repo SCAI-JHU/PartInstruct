@@ -26,10 +26,12 @@ from typing import Union, List, Dict, Tuple, Optional, Literal
 
 State = collections.namedtuple("State", ["tsdf", "pc"])
 
-root_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "partgym")
-config_path = os.path.join(root_directory, "config", "config.yaml")
+root_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+planner_directory = os.path.join(root_directory, "PartInstruct", "PartGym")
+config_path = os.path.join(planner_directory, "config", "config_oracle.yaml")
 ## Open and read the YAML file
 config = OmegaConf.load(config_path)
+config.data_root = os.path.join(root_directory, "data")
 data_root = config.data_root
 
 # Initialize the output directory and other parameters
@@ -83,7 +85,6 @@ for skill in chain_params:
     elif skill_name == "release_obj":
         planner.release_obj()
     skill_success = checker.is_skill_done()
-    ## DEBUG
     print("checker", skill_success)
     print("env", env.done_cur_skill)
     success_string = "succeeded" if skill_success else "failed"

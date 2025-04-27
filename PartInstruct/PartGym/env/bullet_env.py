@@ -120,7 +120,7 @@ class BulletEnv(gym.Env):
         self.robot_base_position = self.config.robot_base_position
         self.obj_init_position = self.config.obj_position
 
-        self.data_root = self.config.data_root
+        self.data_root = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data")
         self.dataset_meta_path = os.path.join(self.data_root, self.config.meta_path)
         
         self.urdf_robot = os.path.join(self.data_root, self.config.urdf_robot)
@@ -801,7 +801,7 @@ class BulletEnv(gym.Env):
     def _get_instruction(self):
 
         if self.skill_mode:
-            if self.cur_skill_idx >= len(self.skill_instructions) or self.skill_instructions is None:
+            if self.skill_instructions is None or self.cur_skill_idx >= len(self.skill_instructions):
                 instruction = self._get_skill_instruction()
             else:
                 instruction = self.skill_instructions[self.cur_skill_idx]

@@ -10,8 +10,8 @@ cam_static_intrinsics:
   cy: 150.0
 cam_static_dist: 0.8
 cam_static_yaw: -90
-cam_static_pitch: -20 # 40
-cam_static_target: [-0.25, 0.05, 0.5] # [-0.1, 0.05, 0.5] [0.15, 0.1, 0.15] [0.18, 0, 0.2]
+cam_static_pitch: -20
+cam_static_target: [-0.25, 0.05, 0.5]
 cam_wrist_intrinsics:
   fx: 300.0
   fy: 300.0
