@@ -33,7 +33,7 @@ rm -r data/assets*
 ### Run Demos with Oracle Policy
 This command will sample part-level manipulation tasks from the evaluation metadata and execute the tasks using an Oracle planner:
 ```bash
-python run_oracle_policy.py
+python scripts/run_oracle_policy.py
 ```
 
 ### Evaluate Code as Policies
@@ -43,12 +43,12 @@ export OPENAI_API_KEY=your_openai_api_key
 ```
 Then run the following command:
 ```bash
-python run_code_as_policies.py
+python scripts/run_code_as_policies.py
 ```
 
 ### Run evalutaion of a baseline
 
 ```
-PartInstruct/scripts/eval_dp_mask.sh
+scripts/eval_dp_mask.sh
 ```
 
