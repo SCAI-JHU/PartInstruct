@@ -46,7 +46,7 @@ Then run the following command:
 python scripts/run_code_as_policies.py
 ```
 
-### Run evalutaion of a baseline
+### Run Evaluation of a Baseline
 
 ```
 ./scripts/eval_dp_mask.sh
