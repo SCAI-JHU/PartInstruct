@@ -30,3 +30,19 @@ mv data/assets/* data/
 rm -r data/assets*
 ```
 
+### Run Demos with Oracle Policy
+This command will sample part-level manipulation tasks from the evaluation metadata and execute the tasks using an Oracle planner.
+```bash
+python run_oracle_policy.py
+```
+
+### Evaluate Code as Policies
+To evaluate [Code as Policies](https://code-as-policies.github.io/) with GPT4o, use the following command to set up your OpenAI API key as an environmental variable.
+```bash
+export OPENAI_API_KEY=your_openai_api_key
+```
+Then run the following command.
+```bash
+python run_code_as_policies.py
+```
+
