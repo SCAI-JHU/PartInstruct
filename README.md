@@ -49,6 +49,6 @@ python scripts/run_code_as_policies.py
 ### Run evalutaion of a baseline
 
 ```
-scripts/eval_dp_mask.sh
+./scripts/eval_dp_mask.sh
 ```
 
