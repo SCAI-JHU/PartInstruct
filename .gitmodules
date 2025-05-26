@@ -1,0 +1,15 @@
+[submodule "third_party/diffusion_policy"]
+	path = third_party/diffusion_policy
+	url = ./third_party/diffusion_policy/
+[submodule "third_party/gym-0.21.0"]
+	path = third_party/gym-0.21.0
+	url = ./third_party/gym-0.21.0/
+[submodule "third_party/pytorch3d_simplified"]
+	path = third_party/pytorch3d_simplified
+	url = ./third_party/pytorch3d_simplified/
+[submodule "third_party/sam_2"]
+	path = third_party/sam_2
+	url = ./third_party/sam_2/
+[submodule "third_party/pybullet_planning"]
+	path = third_party/pybullet_planning
+	url = ./third_party/pybullet_planning/
