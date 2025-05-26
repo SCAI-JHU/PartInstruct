@@ -7,6 +7,7 @@
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
 conda create --name partinstruct python=3.9
+conda activate partinstruct
 conda install -c conda-forge gxx_linux-64
 pip3 install torch torchvision torchaudio
 ```
@@ -51,10 +52,6 @@ download_ckpts.sh
 ```
 
 ### Run Demos with Oracle Policy
-Activate Conda environment:
-```bash
-conda activate partinstruct
-```
 This command will sample part-level manipulation tasks from the evaluation metadata and execute the tasks using an Oracle planner:
 ```bash
 python scripts/run_oracle_policy.py
