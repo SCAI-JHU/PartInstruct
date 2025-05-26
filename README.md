@@ -10,7 +10,7 @@
 
 ![intro](teaser/figure_intro.png)
 
-We introduce PartInstruct, the first large-scale benchmark for training and evaluating fine-grained robot manipulation policies using part-level instructions.
+We introduce **PartInstruct**, the first large-scale benchmark for training and evaluating fine-grained robot manipulation policies using part-level instructions.
 
 ### Environment Setup 
 
