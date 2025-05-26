@@ -1,7 +1,9 @@
 # PartInstruct
 ### [Paper](https://openreview.net/pdf?id=Kb4fDvJBlj) | [Project Page](https://partinstruct.github.io/) | [Dataset](https://huggingface.co/datasets/SCAI-JHU/PartInstruct)
-We introduce PartInstruct, the first large-scale benchmark for training and evaluating fine-grained robot manipulation policies using part-level instructions.
+
 ![intro](teaser/figure_intro.png)
+
+We introduce PartInstruct, the first large-scale benchmark for training and evaluating fine-grained robot manipulation policies using part-level instructions.
 
 ### Environment Setup 
 
