@@ -12,10 +12,10 @@ conda install -c conda-forge gxx_linux-64
 pip3 install torch torchvision torchaudio
 ```
 
-Install third party
+Install third-party
 
 ```bash
-pip install setuptools==59.5.0 opencv-python open3d pybullet transformers scipy openai trimesh sentence-transformers openai google-generativeai einops dill diffusers zarr cmake==3.25 robomimic==0.2.0 efficientnet_pytorch av sentencepiece wandb supervision timm
+pip install -r requirements.txt
 
 pip install -e .
 pip install -e ./third_party/pybullet_planning/
