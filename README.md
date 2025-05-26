@@ -84,7 +84,7 @@ python PartInstruct/baselines/evaluation/evaluator.py \
     n_action_steps=8 \
     job_id='0' \
     ckpt_path=data/checkpoints/diffusion_policy/latest.ckpt \
-    output_dir=outputs/ \
+    output_dir=outputs/GPT4o+DP \
     task.env_runner.n_envs=1 \
     task.env_runner.n_vis=1
 ```
