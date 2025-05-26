@@ -1,4 +1,6 @@
 # PartInstruct
+### [Paper](https://openreview.net/pdf?id=Kb4fDvJBlj) | [Project Page](https://partinstruct.github.io/)
+
 
 ### Environment Setup 
 
