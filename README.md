@@ -69,7 +69,10 @@ python scripts/run_code_as_policies.py
 ### Run Evaluation
 
 ```bash
-# e.g. Run Evaluation with Diffusion Policy (DP)
+# e.g. Run Evaluation with a Bi-level planner (Diffusion Policy (DP)+GPT4o)
+# set the OpenAI key if haven't
+export OPENAI_API_KEY=your_openai_api_key
+# Run evaluation
 python PartInstruct/baselines/evaluation/evaluator.py \
     --config-name dp_evaluator_mask_one_enc \
     rollout_mode='specific_ckpt' \
