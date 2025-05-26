@@ -6,7 +6,8 @@
 ```bash
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
-conda create -n partinstruct -c conda-forge cmake=3.24.3 gxx_linux-64 python=3.9
+conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 gxx_linux-64 ninja gcc_linux-64=12 gxx_linux-64=12
+
 conda activate partinstruct
 pip3 install torch torchvision torchaudio
 ```
