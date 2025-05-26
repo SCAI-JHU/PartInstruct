@@ -55,7 +55,7 @@ args = parser.parse_args()
 
 seed = args.seed
 rng = np.random.default_rng(seed)
-output_dir = os.path.join(data_root, "..", "output", args.output_dir)
+output_dir = os.path.join(data_root, "..", "outputs", args.output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 # Retrieve OpenAI API key from an environment variable.
@@ -464,7 +464,7 @@ for obj_class in keys:
                         break
                     policy.execute_next_action(task_description)
                     # agent.grasp_obj(part_grasp='left')
-                    done = env._check_if_done_test_eval()
+                    done = env._check_if_done_task()
                 print("Final state:")
                 print(policy.get_state_info())
                 # Save

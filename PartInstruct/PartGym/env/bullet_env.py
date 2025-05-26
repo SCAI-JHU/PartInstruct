@@ -124,7 +124,7 @@ class BulletEnv(gym.Env):
         self.robot_base_position = self.config.robot_base_position
         self.obj_init_position = self.config.obj_position
 
-        self.data_root = self.config.data_root
+        self.data_root = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data")
         self.dataset_meta_path = os.path.join(self.data_root, self.config.meta_path)
         
         self.urdf_robot = os.path.join(self.data_root, self.config.urdf_robot)
@@ -938,6 +938,68 @@ class BulletEnv(gym.Env):
         self.obj_init_position[-1] = 0.2
         self.obj_init_orientation = episode_info["obj_pose"][:4]
         self.obj_scale = episode_info["obj_scale"]
+
+    def save_renders(self, video_path, video_only=False):
+        assert self.record
+        rgbs = [renders["agentview"]["rgb"] for renders in self.render_sequence]
+        if not video_only:
+            depths = [renders["agentview"]["depth"] for renders in self.render_sequence]
+            segmentations = [renders["agentview"]["mask"] for renders in self.render_sequence]
+
+        if self.use_wrist_camera:
+            wrist_rgbs = [renders["wrist"]["rgb"] for renders in self.render_sequence]
+            if not video_only:
+                wrist_depths = [renders["wrist"]["depth"] for renders in self.render_sequence]
+                wrist_segmentations = [renders["wrist"]["mask"] for renders in self.render_sequence]
+
+        video_dir, filename = os.path.split(video_path)
+        if os.path.exists(video_dir):
+            shutil.rmtree(video_dir)
+        os.makedirs(video_dir, exist_ok=True)
+        name, _ = os.path.splitext(filename)
+        wrist_name = name+"_wrist"
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Define codec
+        out_rgb = cv2.VideoWriter(os.path.join(video_dir, name+'.mp4'), fourcc, self.control_hz, (self.config.render_width,self.config.render_height))
+        
+        # Save RGB video
+        for frame in rgbs:
+            out_rgb.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
+        out_rgb.release()
+        print(f"RGB video saved at {os.path.join(video_dir, name + '.mp4')}")
+
+        if self.use_wrist_camera:
+            out_wrist_rgb = cv2.VideoWriter(os.path.join(video_dir, wrist_name+'.mp4'), fourcc, self.control_hz, (self.robot.wrist_camera.intrinsic.width,self.robot.wrist_camera.intrinsic.height))
+            # Save RGB video
+            for frame in wrist_rgbs:
+                out_wrist_rgb.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            out_wrist_rgb.release()
+        if not video_only:
+            with ThreadPoolExecutor() as executor:
+                depth_dir = os.path.join(video_dir, name + '_depth')
+                os.makedirs(depth_dir, exist_ok=True)
+                for i, depth_frame in enumerate(depths):
+                    depth_image_path = os.path.join(depth_dir, f'depth_{i:04d}.png')
+                    executor.submit(save_depth, depth_image_path, depth_frame)
+
+                segmentation_dir = os.path.join(video_dir, name + '_segmentation')
+                os.makedirs(segmentation_dir, exist_ok=True)
+                for i, segmentation_frame in enumerate(segmentations):
+                    segmentation_image_path = os.path.join(segmentation_dir, f'segmentation_{i:04d}.png')
+                    executor.submit(save_image, segmentation_image_path, segmentation_frame)
+
+                if self.use_wrist_camera:
+                    depth_dir = os.path.join(video_dir, wrist_name + '_depth')
+                    os.makedirs(depth_dir, exist_ok=True)
+                    for i, depth_frame in enumerate(wrist_depths):
+                        depth_image_path = os.path.join(depth_dir, f'depth_{i:04d}.png')
+                        executor.submit(save_depth, depth_image_path, depth_frame)
+
+                    segmentation_dir = os.path.join(video_dir, wrist_name + '_segmentation')
+                    os.makedirs(segmentation_dir, exist_ok=True)
+                    for i, segmentation_frame in enumerate(wrist_segmentations):
+                        segmentation_image_path = os.path.join(segmentation_dir, f'segmentation_{i:04d}.png')
+                        executor.submit(save_image, segmentation_image_path, segmentation_frame)
 
     def save_states(self, state_path):
         assert self.record

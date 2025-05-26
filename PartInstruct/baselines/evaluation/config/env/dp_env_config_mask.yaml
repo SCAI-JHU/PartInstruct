@@ -34,15 +34,15 @@ release_target_rot_thred: 0.1
 
 device: "cuda:0"
 ## paths
-data_root: PartInstruct/data
+data_root: data
 meta_path: episodes_meta_test.json
-scene_path: assets/urdfs/scenes/stage_v3_sc0_staging.urdf
+scene_path: urdfs/scenes/stage_v3_sc0_staging.urdf
 scene_config_path: null
 objects_directory: null
-urdf_robot: assets/urdfs/robots/franka_panda/panda.urdf
-urdf_table: assets/urdfs/wood/wood.urdf
-urdf_floor: assets/urdfs/floor/floor.urdf
-partnet_path: assets/partnet-grasping
+urdf_robot: urdfs/robots/franka_panda/panda.urdf
+urdf_table: urdfs/wood/wood.urdf
+urdf_floor: urdfs/floor/floor.urdf
+partnet_path: partnet-grasping
 
 shape_meta:
   obs:

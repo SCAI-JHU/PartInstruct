@@ -182,12 +182,6 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                 info = self._get_info()
                 return observation, self.reward, done, info
 
-        print("----------------------------")
-        print(len(self.actual_chain_params))
-        print(self.cur_skill_idx)
-        print(self.counter)
-        print(self.cur_skill_params)
-        print("----------------------------")
         skill_avg = self.skill_avg_steps[self.cur_skill]
 
         if self.counter == 0:
@@ -229,7 +223,6 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                     "skill_name": next_skill_params["skill_name"],
                     "params": next_skill_params["params"]
                 })
-                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 print(next_skill_params)
                 print(next_skill_instruction)
                 self.cur_skill_instruction = next_skill_instruction
@@ -237,7 +230,6 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                 self.cur_skill_params = next_skill_params["params"]
                 part_keys = [key for key in self.cur_skill_params if "part" in key]
                 # For the next skill instruction, part keys does not exist
-                print("****************************")
                 print(part_keys)
                 if part_keys != [] and self.cur_skill_params[part_keys[0]] not in self.parser.part_pcds:
                     best_match = self.gpt_planner.find_best_match(self.cur_skill_params[part_keys[0]], self.parser.part_pcds)

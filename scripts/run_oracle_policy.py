@@ -53,7 +53,7 @@ args = parser.parse_args()
 
 seed = args.seed
 rng = np.random.default_rng(seed)
-output_dir = os.path.join(data_root, "..", "output", args.output_dir)
+output_dir = os.path.join(data_root, "..", "outputs", args.output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 class RobotAgent:

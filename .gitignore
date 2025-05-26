@@ -13,6 +13,8 @@ frames/
 *h100.yml
 *.npy
 outputs/
+output/
+.empty/
 *.egg-info
 *.egg*
 *.so
