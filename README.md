@@ -4,8 +4,10 @@
 
 
 ```bash
+git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
+cd PartInstruct
 conda create --name partinstruct python=3.9
-
+conda install -c conda-forge gxx_linux-64
 pip3 install torch torchvision torchaudio
 ```
 
@@ -20,8 +22,6 @@ pip install -e ./third_party/diffusion_policy/
 pip install -e ./third_party/gym-0.21.0/
 pip install -e ./third_party/pytorch3d_simplified/
 pip install -e ./third_party/sam_2/
-
-[conda install -c conda-forge gxx_linux-64]
 
 ```
 
