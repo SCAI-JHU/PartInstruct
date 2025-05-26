@@ -66,10 +66,15 @@ Then run the following command:
 python scripts/run_code_as_policies.py
 ```
 
-### Run Evaluation
+### Evaluate Bi-level Planners
 
 ```bash
-# e.g. Run Evaluation with Diffusion Policy (DP)
+# e.g. Run Evaluation with a Bi-level planner (GPT4o+Diffusion Policy)
+
+# set the OpenAI key if haven't
+export OPENAI_API_KEY=your_openai_api_key
+
+# Run evaluation
 python PartInstruct/baselines/evaluation/evaluator.py \
     --config-name dp_evaluator_mask_one_enc \
     rollout_mode='specific_ckpt' \
@@ -79,7 +84,7 @@ python PartInstruct/baselines/evaluation/evaluator.py \
     n_action_steps=8 \
     job_id='0' \
     ckpt_path=data/checkpoints/diffusion_policy/latest.ckpt \
-    output_dir=outputs/ \
+    output_dir=outputs/GPT4o+DP \
     task.env_runner.n_envs=1 \
     task.env_runner.n_vis=1
 ```
