@@ -47,6 +47,7 @@ Download checkpoints of SAM-2 (Use in Bi-level Planning)
 ```bash
 cd ./third_party/sam_2/checkpoints/
 bash download_ckpts.sh
+cd ../../../
 ```
 
 ### Run Demos with Oracle Policy
