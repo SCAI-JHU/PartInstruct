@@ -1,15 +1,15 @@
 [submodule "third_party/diffusion_policy"]
 	path = third_party/diffusion_policy
-	url = ./third_party/diffusion_policy/
+	url = https://github.com/yifanyin11/diffusion_policy.git
 [submodule "third_party/gym-0.21.0"]
 	path = third_party/gym-0.21.0
-	url = ./third_party/gym-0.21.0/
+	url = https://github.com/yifanyin11/gym-0.21.0.git
 [submodule "third_party/pytorch3d_simplified"]
 	path = third_party/pytorch3d_simplified
-	url = ./third_party/pytorch3d_simplified/
+	url = https://github.com/yifanyin11/pytorch3d_simplified.git
 [submodule "third_party/sam_2"]
 	path = third_party/sam_2
-	url = ./third_party/sam_2/
+	url = https://github.com/yifanyin11/sam_2.git
 [submodule "third_party/pybullet_planning"]
 	path = third_party/pybullet_planning
-	url = ./third_party/pybullet_planning/
+	url = https://github.com/yifanyin11/pybullet_planning.git
