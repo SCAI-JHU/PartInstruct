@@ -66,7 +66,7 @@ Then run the following command:
 python scripts/run_code_as_policies.py
 ```
 
-### Run Evaluation of a Baseline
+### Run Evaluation
 
 ```bash
 # e.g. Run Evaluation with Diffusion Policy (DP)
