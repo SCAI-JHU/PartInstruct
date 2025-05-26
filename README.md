@@ -66,7 +66,7 @@ Then run the following command:
 python scripts/run_code_as_policies.py
 ```
 
-### Run Evaluation
+### Evaluate Bi-level Planners
 
 ```bash
 # e.g. Run Evaluation with a Bi-level planner (GPT4o+Diffusion Policy)
