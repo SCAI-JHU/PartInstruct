@@ -78,8 +78,8 @@ python PartInstruct/baselines/evaluation/evaluator.py \
     n_obs_steps=2 \
     n_action_steps=8 \
     job_id='0' \
-    ckpt_path=PartInstruct/data/checkpoints/diffusion_policy/latest.ckpt \
-    output_dir=PartInstruct/outputs/ \
+    ckpt_path=data/checkpoints/diffusion_policy/latest.ckpt \
+    output_dir=outputs/ \
     task.env_runner.n_envs=1 \
     task.env_runner.n_vis=1
 ```
