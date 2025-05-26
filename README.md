@@ -38,8 +38,7 @@ huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir .
 
 #To download PartInstruct dataset in hdf5 format, add "demos/**" for all demo, "demos/OBJECT_NAME.hdf5" for demo of specific object type
 
-unzip ./data/assets.zip -d ./data/
-mv data/assets/* data/
+unzip ./data/assets.zip -d ./data/ && mv data/assets/* data/
 rm -r data/assets*
 ```
 
