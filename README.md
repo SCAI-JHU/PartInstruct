@@ -1,5 +1,5 @@
 # PartInstruct
-### [Paper](https://openreview.net/pdf?id=Kb4fDvJBlj) | [Project Page](https://partinstruct.github.io/) | [Dataset] (https://huggingface.co/datasets/SCAI-JHU/PartInstruct)
+### [Paper](https://openreview.net/pdf?id=Kb4fDvJBlj) | [Project Page](https://partinstruct.github.io/) | [Dataset](https://huggingface.co/datasets/SCAI-JHU/PartInstruct)
 
 
 ### Environment Setup 
