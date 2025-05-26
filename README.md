@@ -51,6 +51,10 @@ download_ckpts.sh
 ```
 
 ### Run Demos with Oracle Policy
+Activate Conda environment:
+```bash
+conda activate partinstruct
+```
 This command will sample part-level manipulation tasks from the evaluation metadata and execute the tasks using an Oracle planner:
 ```bash
 python scripts/run_oracle_policy.py
