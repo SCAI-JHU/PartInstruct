@@ -69,7 +69,7 @@ python scripts/run_code_as_policies.py
 ### Run Evaluation
 
 ```bash
-# e.g. Run Evaluation with a Bi-level planner (Diffusion Policy (DP)+GPT4o)
+# e.g. Run Evaluation with a Bi-level planner (GPT4o+Diffusion Policy)
 # set the OpenAI key if haven't
 export OPENAI_API_KEY=your_openai_api_key
 # Run evaluation
