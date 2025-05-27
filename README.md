@@ -19,7 +19,7 @@ We introduce **PartInstruct**, the first large-scale benchmark for training and 
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
 conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
-conda install -c nvidia cuda=12.1
+conda install -c nvidia cuda=12.1 # ensure it matches your cuda version
 conda activate partinstruct
 
 export PATH=$CONDA_PREFIX/bin:$PATH
