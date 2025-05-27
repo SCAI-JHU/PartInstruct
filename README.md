@@ -107,3 +107,15 @@ python PartInstruct/baselines/evaluation/evaluator.py \
     task.env_runner.n_vis=1
 ```
 
+### Citation
+
+If you find our work useful in your research, please consider citing:
+
+```bibtex
+@inproceedings{yin2025partinstruct,
+	title={PartInstruct: Part-level Instruction Following for Fine-grained Robot Manipulation},
+	author={Yin, Yifan and Han, Zhengtao and Aarya, Shivam and Xu, Shuhang and Wang, Jianxin and Peng, Jiawei and Wang, Angtian and Yuille, Alan and Shu, Tianmin},
+	booktitle={Proceedings of Robotics: Science and Systems (RSS)},
+	year={2025}
+}
+```
