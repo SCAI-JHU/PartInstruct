@@ -1,6 +1,6 @@
 # PartInstruct
 
-<a href="https://openreview.net/pdf?id=Kb4fDvJBlj"><strong>Paper</strong></a>
+<a href="https://www.roboticsproceedings.org/rss21/p148.pdf"><strong>Paper</strong></a>
   |
 <a href="https://partinstruct.github.io/"><strong>Project Page</strong></a>
   |
