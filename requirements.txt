@@ -19,3 +19,5 @@ sentencepiece
 wandb
 supervision
 timm
+configargparse
+nbformat==5.7.0

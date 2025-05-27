@@ -156,7 +156,7 @@ for obj_class in keys:
                 
                 done_all_skills = (len(done_skills)==len(action))
 
-                done = env._check_if_done_test_eval() or done_all_skills
+                done = env._check_if_done_task() or done_all_skills
 
                 # Save
                 ep_dir = os.path.join(output_dir, f"{split}_{task_type}_{obj_class}_{i}")
