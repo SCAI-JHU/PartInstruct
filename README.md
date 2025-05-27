@@ -19,7 +19,13 @@ We introduce **PartInstruct**, the first large-scale benchmark for training and 
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
 conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
+conda install -c nvidia cuda=12.1
 conda activate partinstruct
+
+export PATH=$CONDA_PREFIX/bin:$PATH
+export CUDA_HOME=$CONDA_PREFIX
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+
 pip3 install torch torchvision torchaudio
 ```
 
