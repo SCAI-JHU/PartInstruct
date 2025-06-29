@@ -18,13 +18,9 @@ We introduce **PartInstruct**, the first large-scale benchmark for training and 
 ```bash
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
-conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
-conda install -c nvidia cuda=12.1 # ensure it matches your cuda version
-conda activate partinstruct
 
-export PATH=$CONDA_PREFIX/bin:$PATH
-export CUDA_HOME=$CONDA_PREFIX
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
+conda activate partinstruct
 
 pip3 install torch torchvision torchaudio
 ```
@@ -37,10 +33,10 @@ pip install -r requirements.txt
 pip install -e .
 pip install -e ./third_party/pybullet_planning/
 pip install -e ./third_party/diffusion_policy/
+pip install -e ./third_party/3D-Diffusion-Policy/
 pip install -e ./third_party/gym-0.21.0/
 pip install -e ./third_party/pytorch3d_simplified/
 pip install -e ./third_party/sam_2/
-
 ```
 
 ### Download Assets and Pretrained Checkpoints
@@ -56,8 +52,7 @@ huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir .
 
 #To download PartInstruct dataset in hdf5 format, add "demos/**" for all demo, "demos/OBJECT_NAME.hdf5" for demo of specific object type
 
-unzip ./data/assets.zip -d ./data/ && mv data/assets/* data/
-rm -r data/assets*
+unzip ./data/assets.zip -d ./data/ && rm data/assets.zip
 ```
 
 Download checkpoints of SAM-2 (Use in Bi-level Planning)
@@ -87,24 +82,47 @@ python scripts/run_code_as_policies.py
 ### Evaluate Bi-level Planners
 
 ```bash
-# e.g. Run Evaluation with a Bi-level planner (GPT4o+Diffusion Policy)
-
 # Set the OpenAI key if haven't
 export OPENAI_API_KEY=your_openai_api_key
 
 # Run evaluation
+# e.g. Run Evaluation with Diffusion Policy (DP-S), use groundtruth part-mask (bullet_env)
 python PartInstruct/baselines/evaluation/evaluator.py \
-    --config-name dp_evaluator_mask_one_enc \
+    --config-name DP-S_evaluator \
     rollout_mode='specific_ckpt' \
     split='test1' \
-    horizon=16 \
-    n_obs_steps=2 \
-    n_action_steps=8 \
-    job_id='0' \
-    ckpt_path=data/checkpoints/diffusion_policy/latest.ckpt \
-    output_dir=outputs/GPT4o+DP \
+    ckpt_path=PartInstruct/data/checkpoints/DP-S/latest.ckpt \
+    output_dir=PartInstruct/outputs/DP-S \
+    task.env_runner.bullet_env=PartInstruct.PartGym.env.bullet_env \
+    task.env_runner._target_=PartInstruct.baselines.evaluation.env_runner.dp_env_runner.DPEnvRunner \
     task.env_runner.n_envs=1 \
     task.env_runner.n_vis=1
+    
+# e.g. Run Evaluation with Diffusion Policy (DP-S), use SAM 2 for part-mask (bullet_env_sam)
+python PartInstruct/baselines/evaluation/evaluator.py \
+    --config-name DP-S_evaluator \
+    rollout_mode='specific_ckpt' \
+    split='test1' \
+    ckpt_path=PartInstruct/data/checkpoints/DP-S/latest.ckpt \
+    output_dir=PartInstruct/outputs/DP-S \
+    task.env_runner.bullet_env=PartInstruct.PartGym.env.bullet_env_sam \
+    task.env_runner._target_=PartInstruct.baselines.evaluation.env_runner.dp_env_runner.DPEnvRunner \
+    task.env_runner.n_envs=1 \
+    task.env_runner.n_vis=1
+
+# e.g. Run Evaluation with Diffusion Policy (DP-S), use bi-level framework (bullet_env_sam_gpt)
+python PartInstruct/baselines/evaluation/evaluator.py \
+    --config-name DP-S_evaluator \
+    rollout_mode='specific_ckpt' \
+    split='test1' \
+    ckpt_path=PartInstruct/data/checkpoints/DP-S/latest.ckpt \
+    output_dir=PartInstruct/outputs/DP-S \
+    task.env_runner.bullet_env=PartInstruct.PartGym.env.bullet_env_sam_gpt \
+    task.env_runner._target_=PartInstruct.baselines.evaluation.env_runner.dp_gpt_env_runner.GPTEnvRunner \
+    task.env_runner.n_envs=1 \
+    task.env_runner.n_vis=1
+
+# For DP3-S, replace the DP-S to DP3-S
 ```
 
 ### Citation

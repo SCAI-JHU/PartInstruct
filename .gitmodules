@@ -13,3 +13,6 @@
 [submodule "third_party/pybullet_planning"]
 	path = third_party/pybullet_planning
 	url = https://github.com/yifanyin11/pybullet_planning.git
+[submodule "third_party/3D-Diffusion-Policy"]
+	path = third_party/3D-Diffusion-Policy
+	url = git@github.com:JimmyZtHan/3D-Diffusion-Policy.git

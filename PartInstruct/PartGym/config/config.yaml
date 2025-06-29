@@ -33,8 +33,9 @@ release_target_rot_thred: 0.1
 
 device: 'cuda:0'
 ## paths
-data_root: /path/to/data
-meta_path: episodes_meta_train.json
+# data_root: /path/to/data
+data_root: /media/yyin34/ExtremePro/projects/partinstruct/code/part_instruct/data
+meta_path: generated_episodes.json
 scene_path: urdfs/scenes/stage_v3_sc0_staging.urdf
 scene_config_path: null
 objects_directory: null 

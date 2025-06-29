@@ -81,7 +81,7 @@ def depth_to_pcd_farthest_points(depth_image, intrinsic_matrix, depth_scale=1.0,
     # Create an Open3D camera intrinsic object
     camera_intrinsics = o3d.camera.PinholeCameraIntrinsic()
     camera_intrinsics.intrinsic_matrix = intrinsic_matrix
-    
+
     # Convert depth image to point cloud
     point_cloud = o3d.geometry.PointCloud.create_from_depth_image(
         depth_o3d,

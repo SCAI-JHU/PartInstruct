@@ -39,10 +39,10 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
     """
     This environment uses the GPT as high-level planner to generate the skill chain and the skill parameters.
     """
-    def __init__(self, config_path=None, gui=False, obj_class=None, random_sample=False, 
+    def __init__(self, config_path=None, config=None, shape_meta=None, gui=False, obj_class=None, random_sample=False, 
                  evaluation=False, split='val', task_type=None, record=False, check_tasks=True, track_samples=False, 
                  replica_scene=False, skill_mode=True, debug_output=None):
-        super(BulletEnv_SAM_GPT, self).__init__(config_path, gui, obj_class, random_sample, 
+        super(BulletEnv_SAM_GPT, self).__init__(config_path, config, shape_meta, gui, obj_class, random_sample, 
                                           evaluation, split, task_type, record, track_samples, 
                                           replica_scene, skill_mode, debug_output)
 
@@ -182,6 +182,12 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                 info = self._get_info()
                 return observation, self.reward, done, info
 
+        print("----------------------------")
+        print(len(self.actual_chain_params))
+        print(self.cur_skill_idx)
+        print(self.counter)
+        print(self.cur_skill_params)
+        print("----------------------------")
         skill_avg = self.skill_avg_steps[self.cur_skill]
 
         if self.counter == 0:
@@ -223,6 +229,7 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                     "skill_name": next_skill_params["skill_name"],
                     "params": next_skill_params["params"]
                 })
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 print(next_skill_params)
                 print(next_skill_instruction)
                 self.cur_skill_instruction = next_skill_instruction
@@ -230,6 +237,7 @@ class BulletEnv_SAM_GPT(BulletEnv_SAM):
                 self.cur_skill_params = next_skill_params["params"]
                 part_keys = [key for key in self.cur_skill_params if "part" in key]
                 # For the next skill instruction, part keys does not exist
+                print("****************************")
                 print(part_keys)
                 if part_keys != [] and self.cur_skill_params[part_keys[0]] not in self.parser.part_pcds:
                     best_match = self.gpt_planner.find_best_match(self.cur_skill_params[part_keys[0]], self.parser.part_pcds)

@@ -13,7 +13,6 @@ import time
 import json
 import copy
 
-from PartInstruct.PartGym.env.bullet_env import BulletEnv
 from PartInstruct.PartGym.env.backend.planner.vgn.vgn_detection import VGN
 from PartInstruct.PartGym.env.backend.utils.grasp import Grasp
 from PartInstruct.PartGym.env.backend.utils.perception import *
@@ -23,7 +22,7 @@ from omegaconf import OmegaConf
 from PartInstruct.PartGym.env.backend.utils.semantic_parser import SpatialSampler, SemanticParser
 from typing import Union, List, Dict, Tuple, Optional, Literal
 
-from third_party.pybullet_planning.pybullet_tools.franka_primitives import (
+from pybullet_tools.franka_primitives import (
     BodyPose, 
     BodyConf, 
     WorldSaver,
@@ -41,11 +40,10 @@ from third_party.pybullet_planning.pybullet_tools.franka_primitives import (
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 State = collections.namedtuple("State", ["tsdf", "pc"])
 
-root_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
-config_path = os.path.join(root_directory, "PartInstruct", "PartGym", "config", "config.yaml")
+root_directory = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(root_directory, "config", "config.yaml")
 ## Open and read the YAML file
 config = OmegaConf.load(config_path)
-config.data_root = os.path.join(root_directory, "data")
 data_root = config.data_root
 
 # Initialize the output directory and other parameters
@@ -70,6 +68,10 @@ class BulletPlanner:
         self.camera = self.world.add_camera(intrinsic, 0.1, 2.0)
         self.record_camera = self.world.add_camera(intrinsic, 0.1, 10.0)
         self.record_camera.set_extrinsic(self.record_extrinsic)
+        # ## DEBUG
+        # rgb, _, _ = self.record_camera.render(self.record_extrinsic, pybullet.ER_BULLET_HARDWARE_OPENGL)
+        # rgb = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        # cv2.imwrite("test.png", rgb)
 
         self.grasp_planner = VGN(planner_model_path, rviz=True)
         self.parser = copy.deepcopy(self.env.parser)
@@ -573,18 +575,18 @@ class BulletPlanner:
     #  Predicates  #
     ################
     @staticmethod
-    def predicate_on_table(env: BulletEnv, parser: Optional[SemanticParser]=None):
+    def predicate_on_table(env, parser: Optional[SemanticParser]=None):
         return env.world.check_body_collision(env.table, env.obj)
     
     @staticmethod
-    def predicate_gripper_open(env: BulletEnv, parser: Optional[SemanticParser]=None, threshold=0.005):
+    def predicate_gripper_open(env, parser: Optional[SemanticParser]=None, threshold=0.005):
         current_gripper_state = env.robot.get_gripper_state()
         if abs(current_gripper_state-env.robot.GRIPPER_OPEN_JOINT_POS) < threshold:
             return True
         return False
     
     @staticmethod
-    def predicate_min_distance(env: BulletEnv, parser: Optional[SemanticParser]=None, min_distance=0.05):
+    def predicate_min_distance(env, parser: Optional[SemanticParser]=None, min_distance=0.05):
         current_obj_pose = env.obj.get_pose()
         current_tcp_pose = env.robot.get_tcp_pose()
         distance = np.linalg.norm(current_obj_pose.translation - current_tcp_pose.translation)
@@ -593,7 +595,7 @@ class BulletPlanner:
         return False
     
     @staticmethod
-    def predicate_touching(env: BulletEnv, parser: Optional[SemanticParser]=None, part_name=""):
+    def predicate_touching(env, parser: Optional[SemanticParser]=None, part_name=""):
         ## check gripper closeness
         # enable collision check between the two fingers
         env.world.p.setCollisionFilterPair(env.robot.panda, env.robot.panda, env.robot.LEFTFINGERIDX, env.robot.RIGHTFINGERIDX, 1)
@@ -616,7 +618,7 @@ class BulletPlanner:
         return ret
 
     @staticmethod
-    def predicate_grasping(env: BulletEnv, parser: Optional[SemanticParser]=None, part_name=""):
+    def predicate_grasping(env, parser: Optional[SemanticParser]=None, part_name=""):
         ## check collison between two fingers and obj part
         if parser is None:
             parser=env.parser
@@ -628,7 +630,7 @@ class BulletPlanner:
         return ret
 
     @staticmethod
-    def predicate_at_position(env: BulletEnv, parser: Optional[SemanticParser]=None, is_obj: bool=True, position: ArrayLike=[0,0,0], position_thred=0.02):
+    def predicate_at_position(env, parser: Optional[SemanticParser]=None, is_obj: bool=True, position: ArrayLike=[0,0,0], position_thred=0.02):
         
         if is_obj:
             current_position = env.obj.get_pose().translation
@@ -641,7 +643,7 @@ class BulletPlanner:
         return ret
 
     @staticmethod
-    def predicate_facing_direction(env: BulletEnv, part_name: str, parser: Optional[SemanticParser]=None, direction: ArrayLike=[1,0,0], direction_thred=0.5):
+    def predicate_facing_direction(env, part_name: str, parser: Optional[SemanticParser]=None, direction: ArrayLike=[1,0,0], direction_thred=0.5):
         position = env.obj.get_pose().translation
         if parser is None:
             parser=env.parser
@@ -656,7 +658,7 @@ class BulletPlanner:
         return ret
     
     @staticmethod
-    def predicate_facing_opposite_direction(env: BulletEnv, part_name: str, parser: Optional[SemanticParser]=None, direction: ArrayLike=[1,0,0], direction_thred=0.5):
+    def predicate_facing_opposite_direction(env, part_name: str, parser: Optional[SemanticParser]=None, direction: ArrayLike=[1,0,0], direction_thred=0.5):
         position = env.obj.get_pose().translation
         if parser is None:
             parser=env.parser
@@ -685,7 +687,7 @@ class BulletPlanner:
         return ret
     
     @staticmethod
-    def preconditions_move_gripper(env: BulletEnv, grasping: bool=False, touching: bool=False, put_down: bool=False):
+    def preconditions_move_gripper(env, grasping: bool=False, touching: bool=False, put_down: bool=False):
         if grasping:
             assert not touching, "Grasping and touching cannot be true at the same time."
             # check if the object is being grasped
@@ -1462,20 +1464,17 @@ class BulletPlanner:
     #####################
     @staticmethod
     def plan_direct_motion_fn(robot, fixed=[], num_attempts=50, **kwargs):
-        def fn(env, body, q_cur, trgt_pose, **kwargs):
-            world = env.world
-            world.p.setCollisionFilterPair(body, fixed[0], linkIndexA=-1, linkIndexB=-1, enableCollision=0)
+        movable_joints = get_movable_joints(robot)
+        sample_fn = get_sample_fn(robot, movable_joints)
+        def fn(world, body, q_cur, trgt_pose, **kwargs):
+            # saved_world = WorldSaver()
+            trgt_pose = Grasp(trgt_pose).to_planning_grasp(body, robot, get_tool_link(robot)).grasp_pose
+            # obstacles = fixed
             obstacles = fixed
             for i in range(num_attempts):
+                set_joint_positions(robot, movable_joints, sample_fn())
                 conf = BodyConf(robot, q_cur)
-                robot_interface = env.robot
-                T_world_gripper = trgt_pose * robot_interface.T_tcp_gripper
-                target_pos = list(T_world_gripper.translation)
-                target_orn = list(T_world_gripper.rotation.as_quat())
-                q_trgt = world.p.calculateInverseKinematics(robot_interface.panda, robot_interface.ENDEFFECTORIDX, 
-                                                            target_pos, target_orn, 
-                                                            robot_interface.LL, robot_interface.UL, robot_interface.JR, 
-                                                            q_cur, maxNumIterations=20)
+                q_trgt = inverse_kinematics(robot, get_tool_link(robot), trgt_pose)
                 if q_trgt is not None:
                     q_trgt_list = list(q_trgt)
                     q_trgt_list[-2:] = q_cur[-2:]
@@ -1485,14 +1484,7 @@ class BulletPlanner:
                     print("IK failed for target pose on attempt", i)
                     continue
                 conf.assign()
-                # path = plan_direct_joint_motion(robot, conf.joints, q_trgt, obstacles=obstacles)
-                path = plan_joint_motion(
-                    robot,
-                    conf.joints,
-                    q_trgt,
-                    obstacles=obstacles,
-                    self_collisions=True
-                )
+                path = plan_direct_joint_motion(robot, conf.joints, q_trgt, obstacles=obstacles)
                 print("path", path)
                 if path is None:
                     print('Direct motion failed!')
@@ -1505,20 +1497,14 @@ class BulletPlanner:
     def plan_free_motion_fn(robot, fixed=[], num_attempts=50, self_collisions=True, **kwargs):
         movable_joints = get_movable_joints(robot)
         sample_fn = get_sample_fn(robot, movable_joints)
-        def fn(env, body, q_cur, trgt_pose, **kwargs):
-            world = env.world
+        def fn(world, body, q_cur, trgt_pose, **kwargs):
+            trgt_pose = Grasp(trgt_pose).to_planning_grasp(body, robot, get_tool_link(robot)).grasp_pose
+            # obstacles = fixed
             obstacles = fixed + [body]
             for i in range(num_attempts):
                 set_joint_positions(robot, movable_joints, sample_fn())
                 conf = BodyConf(robot, q_cur)
-                robot_interface = env.robot
-                T_world_gripper = trgt_pose * robot_interface.T_tcp_gripper
-                target_pos = list(T_world_gripper.translation)
-                target_orn = list(T_world_gripper.rotation.as_quat())
-                q_trgt = world.p.calculateInverseKinematics(robot_interface.panda, robot_interface.ENDEFFECTORIDX, 
-                                                            target_pos, target_orn, 
-                                                            robot_interface.LL, robot_interface.UL, robot_interface.JR, 
-                                                            q_cur, maxNumIterations=20)
+                q_trgt = inverse_kinematics(robot, get_tool_link(robot), trgt_pose)
                 if q_trgt is not None:
                     q_trgt_list = list(q_trgt)
                     q_trgt_list[-2:] = q_cur[-2:]
@@ -1547,9 +1533,9 @@ class BulletPlanner:
     def plan_holding_motion_fn(robot, fixed=[], num_attempts=50, self_collisions=False, **kwargs):
         movable_joints = get_movable_joints(robot)
         sample_fn = get_sample_fn(robot, movable_joints)
-        def fn(env, body, q_cur, trgt_pose, grasp_pose=None):
-            world = env.world
+        def fn(world, body, q_cur, trgt_pose, grasp_pose=None):
             world.p.setCollisionFilterPair(robot, body, linkIndexA=-1, linkIndexB=-1, enableCollision=0)
+            trgt_pose = Grasp(trgt_pose).to_planning_grasp(body, robot, get_tool_link(robot)).grasp_pose
             obstacles = fixed
             grasp = Grasp(grasp_pose).to_planning_grasp(body, robot, get_tool_link(robot))
             grasp_body = copy.deepcopy(grasp)
@@ -1559,14 +1545,7 @@ class BulletPlanner:
             for i in range(num_attempts):
                 set_joint_positions(robot, movable_joints, sample_fn())
                 conf = BodyConf(robot, q_cur)
-                robot_interface = env.robot
-                T_world_gripper = trgt_pose * robot_interface.T_tcp_gripper
-                target_pos = list(T_world_gripper.translation)
-                target_orn = list(T_world_gripper.rotation.as_quat())
-                q_trgt = world.p.calculateInverseKinematics(robot_interface.panda, robot_interface.ENDEFFECTORIDX, 
-                                                            target_pos, target_orn, 
-                                                            robot_interface.LL, robot_interface.UL, robot_interface.JR, 
-                                                            q_cur, maxNumIterations=20)
+                q_trgt = inverse_kinematics(robot, get_tool_link(robot), trgt_pose)
                 if q_trgt is not None:
                     q_trgt_list = list(q_trgt)
                     q_trgt_list[-2:] = (0.0, 0.0)
@@ -1595,7 +1574,7 @@ class BulletPlanner:
 class OracleChecker:
     ALL_SKILLS = ["grasp_obj", "move_gripper", "rotate_obj", "touch_obj", "release_obj"]
 
-    def __init__(self, env: BulletEnv):
+    def __init__(self, env):
         self.env = env
         self.current_skill = None
         self.chain_params = None

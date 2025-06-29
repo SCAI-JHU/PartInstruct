@@ -21,160 +21,9 @@ from PartInstruct.baselines.utils.video_recording_wrapper import VideoRecordingW
 from PartInstruct.baselines.utils.log_utils import append_to_info_file, combine_to_json
 from PartInstruct.baselines.policy.base_policy import BasePolicy
 from PartInstruct.baselines.utils.robodiff_pytorch_utils import dict_apply
+from PartInstruct.baselines.evaluation.env_runner.dp3_env_runner import DP3EnvRunner
 
-
-class BaseEnvRunner():
-    def __init__(self,
-            output_dir,
-            lang_encoder: T5Encoder,
-            obj_class=None,
-            start_seed=10000,
-            max_steps=250,
-            n_obs_steps=8,
-            n_action_steps=8,
-            fps=10,
-            crf=22,
-            env_config=None, 
-            shape_meta=None,
-            gui=False, 
-            past_action=False,
-            tqdm_interval_sec=5.0,
-            n_envs=None,
-            n_vis=0,
-            split=None,
-            task_types=None,
-            epoch=None,
-            bullet_env=None,
-            metrics_mode='default',
-            log_mode='verbose',
-            debug_output=None
-        ):
-        self.lang_encoder = lang_encoder
-        self.log_mode = log_mode
-        self.metrics_mode = metrics_mode
-        self.output_dir = pathlib.Path(output_dir).joinpath(
-                        'media', str(epoch), str(obj_class), 'split-'+ str(split))
-        print("#### Evaluation results output to:", self.output_dir)
-
-        steps_per_render = max(10 // fps, 1)
-        module = importlib.import_module(bullet_env)
-        BulletEnv = next(
-            obj for name, obj in inspect.getmembers(module, inspect.isclass)
-            if issubclass(obj, gym.Env) and obj.__module__ == module.__name__
-        )
-        def env_fn(obj_class, split, task_type, max_steps):
-            return MultiStepWrapper(
-                VideoRecordingWrapper(
-                    BulletEnv(
-                        obj_class=obj_class,
-                        evaluation=True,
-                        split=split,
-                        task_type=task_type,
-                        record=False,
-                        config=env_config,
-                        shape_meta=shape_meta,
-                        gui=gui,
-                        debug_output=debug_output,
-                    ),
-                    video_recoder=VideoRecorder.create_h264(
-                        fps=fps,
-                        codec='h264',
-                        input_pix_fmt='rgb24',
-                        crf=crf,
-                        thread_type='FRAME',
-                        thread_count=1
-                    ),
-                    file_path=None,
-                    steps_per_render=steps_per_render
-                ),
-                n_obs_steps=n_obs_steps,
-                n_action_steps=n_action_steps,
-                max_episode_steps=max_steps
-            )
-
-        env_fns = [
-            lambda obj_class=obj_class, split=split, task_type=task_types[i]: 
-                env_fn(
-                    obj_class, 
-                    split, 
-                    task_type, 
-                    max_steps=400 if str(split) == 'test4' else 250
-                ) 
-            for i in range(n_envs)
-        ]
-
-        env_seeds = list()
-        env_prefixs = list()
-        env_init_fn_dills = list()
-
-        self.filename_info_path = pathlib.Path(self.output_dir).joinpath(
-            'video_filename.info')
-        self.task_info_path = pathlib.Path(self.output_dir).joinpath(
-            'video_taskname.info')
-        nth_env = 0
-
-        for i in range(n_envs):
-            nth_env += 1
-            seed = start_seed + i
-            enable_render = i < n_vis
-
-            def init_fn(env, seed=seed, enable_render=enable_render):
-                # setup rendering
-                # video_wrapper
-                assert isinstance(env.env, VideoRecordingWrapper)
-                env.env.video_recoder.stop()
-                env.env.file_path = None
-                if enable_render:
-                    filepath = pathlib.Path(self.output_dir).joinpath(
-                        'task_type-' + str(task_types[i]) + '_env-' + str(nth_env) + ".mp4")
-                    filepath.parent.mkdir(parents=False, exist_ok=True)
-                    filepath = str(filepath)
-                    filename = os.path.basename(filepath)
-                    env.env.file_path = filepath
-                    append_to_info_file(filename, self.filename_info_path)
-
-                assert isinstance(env, MultiStepWrapper)
-            
-            env_seeds.append(seed)
-            env_prefixs.append(split + '/' + str(task_types[i]) + '/' + 'env_' + str(i) + '/')
-            env_init_fn_dills.append(dill.dumps(init_fn))
-
-        env = AsyncVectorEnv(env_fns)
-
-        self.env = env
-        self.env_fns = env_fns
-        self.env_seeds = env_seeds
-        self.env_prefixs = env_prefixs
-        self.env_init_fn_dills = env_init_fn_dills
-        self.fps = fps
-        self.crf = crf
-        self.n_obs_steps = n_obs_steps
-        self.n_action_steps = n_action_steps
-        self.past_action = past_action
-        self.max_steps = max_steps
-        self.tqdm_interval_sec = tqdm_interval_sec
-    
-    def get_obs(self, obs, past_action, device):
-        np_obs_dict = dict(obs)
-        np_tokenized_language = {
-            "input_ids": torch.from_numpy(np_obs_dict["input_ids"]),
-            "attention_mask": torch.from_numpy(np_obs_dict["attention_mask"])
-        }
-        del np_obs_dict["attention_mask"]
-        del np_obs_dict["input_ids"]
-
-        np_instruction = TensorUtils.time_distributed(np_tokenized_language, self.lang_encoder.encode_from_tokenized).detach().numpy()
-        np_obs_dict["instructions"] = np_instruction
-
-        if self.past_action and (past_action is not None):
-            np_obs_dict['past_action'] = past_action[
-                :,-(self.n_obs_steps-1):].astype(np.float32)
-        
-        obs_dict = dict_apply(np_obs_dict, 
-            lambda x: torch.from_numpy(x).to(
-                device=device))
-        
-        return obs_dict
+class GPTEnvRunner(DP3EnvRunner):
 
     def run(self, policy: BasePolicy):
         device = policy.device
@@ -234,9 +83,12 @@ class BaseEnvRunner():
                 obs, reward, done, info = env.step(action)
                 if dump:
                     for i in range(len(info)):
-                        chain_params = info[i]['chain_params'][0]
+                        chain_params = info[i]['actual_chain_params'][0]
                         chain_params = str(chain_params)
                         append_to_info_file(chain_params, self.task_info_path)
+                        gpt_chain_params = info[i]['gpt_chain_params'][0]
+                        gpt_chain_params = str(gpt_chain_params)
+                        append_to_info_file(gpt_chain_params, self.task_info_path)
                 
                 done = np.all(done)
                 past_action = action
@@ -291,7 +143,6 @@ class BaseEnvRunner():
             })
 
         verbose_metrics = {
-            'action': collections.defaultdict(list),
             'obj_id': collections.defaultdict(list),
             'obj_class': collections.defaultdict(list),
             'task_type': collections.defaultdict(list),
@@ -299,6 +150,7 @@ class BaseEnvRunner():
             'obj_pos': collections.defaultdict(list),
             'obj_orient': collections.defaultdict(list),
             'chain_params': collections.defaultdict(list),
+            'gpt_chain_params': collections.defaultdict(list),
         }
 
         log_data = dict()
@@ -306,7 +158,7 @@ class BaseEnvRunner():
             prefix = self.env_prefixs[i]
             log_data.update({
                 f'{prefix}max_reward_{i}': float(np.max(all_rewards[i])),
-                f'{prefix}success_{i}': float(all_infos[i]['Success'][-1]),
+                f'{prefix}task_success_{i}': float(all_infos[i]['Task Success'][-1]),
                 f'{prefix}completion_rate_{i}': float(all_infos[i]['Completion Rate'][-1]),
                 f'{prefix}steps_{i}': int(all_infos[i]['Steps'][-1]),
                 f'{prefix}ep_id_{i}': int(all_infos[i]["ep_id"][-1]),
@@ -321,7 +173,7 @@ class BaseEnvRunner():
 
             metrics["ep_id"][prefix].append(int(all_infos[i]["ep_id"][-1]))
             metrics['rewards'][prefix].append(float(np.max(all_rewards[i])))
-            metrics['successes'][prefix].append(float(all_infos[i]['Success'][-1]))
+            metrics['successes'][prefix].append(float(all_infos[i]['Task Success'][-1]))
             metrics['completion_rates'][prefix].append(float(all_infos[i]['Completion Rate'][-1]))
             metrics['steps'][prefix].append(int(all_infos[i]['Steps'][-1]))
 
@@ -330,14 +182,14 @@ class BaseEnvRunner():
                 metrics['iou'][prefix].append(float(np.mean(all_infos[i]['iou'])))
                 metrics['accuracy'][prefix].append(float(np.mean(all_infos[i]['accuracy'])))
 
-            verbose_metrics['action'][prefix].extend(all_infos[i]['Action'])
             verbose_metrics['obj_id'][prefix].extend(all_infos[i]['Object id'])
             verbose_metrics['obj_class'][prefix].extend(all_infos[i]['obj_class'])
             verbose_metrics['task_type'][prefix].extend(all_infos[i]['Task type'])
             verbose_metrics['obj_scale'][prefix].extend(all_infos[i]['Object scale'])
             verbose_metrics['obj_pos'][prefix].extend(all_infos[i]['Object init pose'])
             verbose_metrics['obj_orient'][prefix].extend(all_infos[i]['Object init orient'])
-            verbose_metrics['chain_params'][prefix].extend(all_infos[i]['chain_params'])
+            verbose_metrics['chain_params'][prefix].extend(all_infos[i]['actual_chain_params'])
+            verbose_metrics['gpt_chain_params'][prefix].extend(all_infos[i]['gpt_chain_params'])
 
             video_path = all_video_paths[i]
             if video_path is not None:

@@ -1,0 +1,156 @@
+defaults:
+  - _self_
+  - env: env_config
+
+name: DP3-S_evaluation
+
+rollout_mode: specific_ckpt
+task_name: mtask_full_mask
+run_name: "default"
+data_root: ${env.data_root}
+meta_path: ${env.meta_path}
+job_id: null
+
+obj_classes: null
+task_type: null
+split: null
+
+shape_meta:
+  obs:
+    agentview_pcd:
+      shape: [1024, 3]
+      type: pcd
+    agentview_part_pcd:
+      shape: [1024, 4]
+      type: pcd
+    gripper_state:
+      shape: [1]
+      type: low_dim
+    joint_states:
+      shape: [7]
+      type: low_dim
+    instructions:
+      shape: [512]
+      type: text
+  action:
+    shape: [7]
+
+output_dir: "PartInstruct/outputs/DP3-S"
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+dataset_obs_steps: ${n_obs_steps}
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+num_iterations: 10
+ckpt_path: null
+epoch: 0
+max_epoch: 1500
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+scheduler:
+  _target_: null
+  parameters: null
+
+loss:
+  _target_: torch.nn.MSELoss
+  loss_kwargs:
+    reduction: "sum"
+
+training:
+  use_ema: True
+  checkpoint_every: 50
+  num_epochs: 3000
+  
+task:
+  name: ${task_name}
+  env_runner:
+    _target_: PartInstruct.baselines.evaluation.env_runner.dp3_gpt_env_runner.GPTEnvRunner
+    lang_encoder:
+      _target_: PartInstruct.baselines.utils.encoders.T5Encoder
+      pretrained_model_name_or_path: t5-small
+    bullet_env: PartInstruct.PartGym.env.bullet_env_sam_gpt
+    fps: 20
+    start_seed: 100000
+    max_steps: 250
+    n_action_steps: ${n_action_steps}
+    n_obs_steps: ${n_obs_steps}
+    n_envs: 16
+    n_vis: 16
+    gui: false
+    debug_output: "PartInstruct/outputs/debug_output"
+    env_config: ${env}
+    shape_meta: ${shape_meta}
+
+policy:
+  _target_: PartInstruct.baselines.policy.diffusion_policy_3d.DP3
+  use_point_crop: true
+  condition_type: film
+  use_down_condition: true
+  use_mid_condition: true
+  use_up_condition: true
+  diffusion_step_embed_dim: 128
+  down_dims:
+  - 512
+  - 1024
+  - 2048
+  crop_shape:
+  - 80
+  - 80
+  encoder_output_dim: 128
+  horizon: ${horizon}
+  kernel_size: 5
+  n_action_steps: ${n_action_steps}
+  n_groups: 16
+  n_obs_steps: ${n_obs_steps}
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: True
+    set_alpha_to_one: True
+    steps_offset: 0
+    prediction_type: sample
+  num_inference_steps: 10
+  obs_as_global_cond: true
+  shape_meta: ${shape_meta}
+  use_pc_color: False
+  pointnet_type: "pointnet"
+  pointcloud_encoder_cfg:
+    in_channels: 3
+    out_channels: ${policy.encoder_output_dim}
+    use_layernorm: true
+    final_norm: layernorm 
+    normal_channel: false
+  use_language: true
+  use_part_mask: true
+
+logging:
+  project: partinstruct-DP3-S
+  resume: false
+  mode: offline
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+wandb_project: partinstruct-DP3-S
+folder: ./
+
+hydra:
+    run:
+        dir: outputs/${name}_${task_name}/${run_name}
+
+experiment_log: null
+debug: false

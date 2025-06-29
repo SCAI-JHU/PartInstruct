@@ -1,7 +1,9 @@
 setuptools==59.5.0
 opencv-python
+open3d
+numpy<2.0.0
 pybullet
-transformers==4.49.0
+transformers
 scipy
 openai
 trimesh
@@ -19,5 +21,3 @@ sentencepiece
 wandb
 supervision
 timm
-configargparse
-nbformat==5.7.0

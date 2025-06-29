@@ -37,10 +37,10 @@ class BulletEnv_SAM(BulletEnv):
     This class inherits all the base functionality from BulletEnv and adds SAM-specific features.
     """
 
-    def __init__(self, config_path=None, gui=False, obj_class=None, random_sample=False, 
+    def __init__(self, config_path=None, config=None, shape_meta=None, gui=False, obj_class=None, random_sample=False, 
                  evaluation=False, split='val', task_type=None, record=False, check_tasks=True, track_samples=False, 
                  replica_scene=False, skill_mode=True, debug_output=None):
-        super(BulletEnv_SAM, self).__init__(config_path, gui, obj_class, random_sample, 
+        super(BulletEnv_SAM, self).__init__(config_path, config, shape_meta, gui, obj_class, random_sample, 
                                           evaluation, split, task_type, record, track_samples, 
                                           replica_scene, skill_mode, debug_output)
         

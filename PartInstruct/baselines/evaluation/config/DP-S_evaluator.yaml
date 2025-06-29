@@ -1,36 +1,51 @@
 defaults:
   - _self_
-  - env: dp_env_config_mask
+  - env: env_config
 
-_target_: lgm_bc.evaluation.dp_evaluator.DPEvaluator
-
-name: evaluation
+name: DP-S_evaluation
 
 rollout_mode: specific_ckpt
-
-shape_meta: ${env.shape_meta}
 task_name: mtask_full_mask_one_encoder
 run_name: "default"
-
 data_root: ${env.data_root}
 meta_path: ${env.meta_path}
-job_id: null
+job_id: 0
 
 obj_classes: null
 task_type: null
 split: null
 
-output_dir: "PartInstruct/outputs/"
+shape_meta:
+  obs:
+    agentview_rgb:
+      shape: [3, 300, 300]
+      type: rgb
+    agentview_part_mask:
+      shape: [1, 300, 300]
+      type: mask
+    gripper_state:
+      shape: [1]
+      type: low_dim
+    joint_states:
+      shape: [7]
+      type: low_dim
+    instructions:
+      shape: [512]
+      type: text
+  action:
+    shape: [7]
+
+output_dir: "PartInstruct/outputs/DP-S"
 starting_epoch: 0
 
 seq_length: 16
 horizon: 16
-n_obs_steps: 1
+n_obs_steps: 2
 n_action_steps: 8
 obs_as_global_cond: true
 
 num_iterations: 10
-ckpt_path: "PartInstruct/data/checkpoints/diffusion_policy/latest.ckpt"
+ckpt_path: null
 epoch: 0
 max_epoch: null
 
@@ -45,22 +60,20 @@ scheduler:
   _target_: null
   parameters: null
 
-lang_encoder:
-  _target_: PartInstruct.baselines.utils.encoders.T5Encoder
-  pretrained_model_name_or_path: t5-small
-
 training:
   use_ema: True
   checkpoint_every: 50
   num_epochs: 3000
 
+lang_encoder:
+  _target_: PartInstruct.baselines.utils.encoders.T5Encoder
+  pretrained_model_name_or_path: t5-small
+
 task:
   name: ${task_name}
   env_runner:
-    _target_: PartInstruct.baselines.evaluation.env_runner.gpt_env_runner.GPTEnvRunner
-    lang_encoder:
-      _target_: PartInstruct.baselines.utils.encoders.T5Encoder
-      pretrained_model_name_or_path: t5-small
+    _target_: PartInstruct.baselines.evaluation.env_runner.dp_gpt_env_runner.GPTEnvRunner
+    lang_encoder: ${lang_encoder}
     bullet_env: PartInstruct.PartGym.env.bullet_env_sam_gpt
     fps: 20
     start_seed: 100000
@@ -69,15 +82,14 @@ task:
     n_obs_steps: ${n_obs_steps}
     n_envs: 16
     n_vis: 16
-    env_config: "PartInstruct/baselines/evaluation/config/env/${env.config_name}.yaml"
     gui: false
     debug_output: "PartInstruct/outputs/debug_output"
+    env_config: ${env}
+    shape_meta: ${shape_meta}
 
 policy:
   _target_: PartInstruct.baselines.policy.diffusion_policy.RobodiffUnetImagePolicy
-
   shape_meta: ${shape_meta}
-
   noise_scheduler:
     _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
     num_train_timesteps: 100
@@ -99,7 +111,6 @@ policy:
     lang_encoder: ${lang_encoder}
     resize_shape: null
     crop_shape: [76, 76]
-    # constant center crop
     random_crop: true
     use_group_norm: true
     share_image_encoder: false
@@ -117,7 +128,7 @@ policy:
   cond_predict_scale: true
 
 logging:
-  project: dp
+  project: partinstruct-DP-S
   resume: false
   mode: offline
   name: ${name}_${task_name}_${run_name}_${now:%Y.%m.%d-%H.%M.%S}
@@ -125,12 +136,8 @@ logging:
   id: null
   group: null
 
-pretrained_model_path: ""
-
-wandb_project: lgm-robodiff_unet_image
+wandb_project: partinstruct-DP-S
 folder: ./
-
-hdf5_cache_mode: low_dim
 
 hydra:
   run:

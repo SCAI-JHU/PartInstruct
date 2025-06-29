@@ -42,7 +42,7 @@ class Evaluator(BaseWorkspace):
                     continue
                 
                 env_runner = hydra.utils.instantiate(
-                    cfg.task.env_runner,
+                    cfg.task.env_runner, env_config=cfg.task.env_runner.env_config, shape_meta=cfg.shape_meta,
                     output_dir=cfg.output_dir, obj_class=obj_class, split=split, task_types=task_types, epoch=self.epoch)
 
                 policy = self.ema_model if cfg.training.use_ema else self.model
