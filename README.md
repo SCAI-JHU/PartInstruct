@@ -49,7 +49,6 @@ Enter your password. You can now download the assets. The following commands dow
 
 ```bash
 huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "*.json" "assets.zip" "checkpoints/**" 
-
 #To download PartInstruct dataset in hdf5 format, add "demos/**" for all demo, "demos/OBJECT_NAME.hdf5" for demo of specific object type
 
 unzip ./data/assets.zip -d ./data/ && rm data/assets.zip
@@ -122,7 +121,7 @@ python PartInstruct/baselines/evaluation/evaluator.py \
     task.env_runner.n_envs=1 \
     task.env_runner.n_vis=1
 
-# For DP3-S, replace the DP-S to DP3-S
+# For DP3-S, replace the DP-S to DP3-S, dp_env_runner to dp3_env_runner
 ```
 
 ### Citation
