@@ -21,3 +21,5 @@ sentencepiece
 wandb
 supervision
 timm
+numba
+imagecodecs

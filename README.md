@@ -77,6 +77,12 @@ Then run the following command:
 ```bash
 python scripts/run_code_as_policies.py
 ```
+### Train Baselines
+```bash
+# After downloading dataset, run 
+bash /scripts/slurm_scripts/train_DP3.sh
+# to start DDP training of DP3 baseline
+```
 
 ### Evaluate Bi-level Planners
 
