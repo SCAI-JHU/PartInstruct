@@ -1,0 +1,209 @@
+defaults:
+  - _self_
+  - env: env_config
+
+name: train_dp3
+
+shape_meta: ${env.shape_meta}
+task_name: ${task.name}
+run_name: "default"
+
+horizon: 4
+n_obs_steps: 2
+n_action_steps: 3
+n_latency_steps: 0
+dataset_obs_steps: ${n_obs_steps}
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+obs:
+  modality:
+    rgb: ["agentview_rgb", "wrist_rgb"]
+    pcd: ["agentview_pcd", "wrist_pcd"]
+    low_dim: ["gripper_state","joint_states", "instruction"]
+
+goal:
+  modality:
+    language: ["instructions"]
+
+lang_encoder:
+  _target_: PartInstruct.baselines.utils.encoders.T5Encoder
+  pretrained_model_name_or_path: t5-small
+
+dataloader:
+  batch_size: 32
+  num_workers: 16
+  shuffle: false
+  pin_memory: True
+  persistent_workers: True
+
+val_dataloader:
+  batch_size: 32
+  num_workers: 16
+  shuffle: False
+  pin_memory: True
+  persistent_workers: False
+
+policy:
+  _target_: PartInstruct.baselines.policy.diffusion_policy_3d.DP3
+  use_point_crop: true
+  condition_type: film
+  use_down_condition: true
+  use_mid_condition: true
+  use_up_condition: true
+  diffusion_step_embed_dim: 128
+  down_dims:
+  - 512
+  - 1024
+  - 2048
+  crop_shape:
+  - 80
+  - 80
+  encoder_output_dim: 64
+  horizon: ${horizon}
+  kernel_size: 5
+  n_action_steps: ${n_action_steps}
+  n_groups: 16
+  n_obs_steps: ${n_obs_steps}
+
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: True
+    set_alpha_to_one: True
+    steps_offset: 0
+    prediction_type: sample
+
+
+  num_inference_steps: 10
+  obs_as_global_cond: true
+  shape_meta: ${shape_meta}
+
+  use_pc_color: false
+  pointnet_type: "pointnet"
+
+  pointcloud_encoder_cfg:
+    in_channels: 3
+    out_channels: ${policy.encoder_output_dim}
+    use_layernorm: true
+    final_norm: layernorm # layernorm, none
+    normal_channel: false
+  use_language: true
+  use_part_mask: False
+
+dataset_path: &dataset_path /home/yfang52/scratch/zhan47/data/mug_simple.hdf5
+abs_action: &abs_action False
+
+dataset:
+  _target_: PartInstruct.baselines.utils.robomimic_dataset.RobomimicReplayImageDataset
+  shape_meta: ${shape_meta}
+  dataset_path: *dataset_path
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  n_obs_steps: ${n_obs_steps}
+  abs_action: *abs_action
+  rotation_rep: 'rotation_6d'
+  use_legacy_normalizer: False
+  use_cache: True
+  seed: 42
+  val_ratio: 0.02
+
+task:
+  name: grasp_mug
+  env_runner:
+    _target_: PartInstruct.baselines.evaluation.env_runner.dp3_env_runner.DP3EnvRunner
+    lang_encoder:
+      _target_: PartInstruct.baselines.utils.encoders.T5Encoder
+      pretrained_model_name_or_path: t5-small
+    fps: 20
+    max_steps: 200
+    n_action_steps: ${n_action_steps}
+    n_envs: null
+    n_obs_steps: ${n_obs_steps}
+    # n_test: 50
+    n_test: 6
+    n_test_vis: 6
+    # n_train: 6
+    n_train: 4
+    n_train_vis: 4
+    env_config: "lgm_bc/config/env/${env.config_name}.yaml"
+    gui: false
+    past_action: false
+    test_start_seed: 100000
+    train_start_seed: 0
+
+ema:
+  _target_: diffusion_policy_3d.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+training:
+  device: ${env.device}
+  debug: false
+  resume: 
+    resume: false
+    epoch: null
+    path: null
+  use_ema: true
+  freeze_encoder: false
+  sample_every: 5
+  checkpoint_every: 50
+  gradient_accumulate_every: 1
+  grad_clip: 1.0
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  warmstart: 10000
+  max_train_steps: null
+  max_val_steps: null
+  num_epochs: 1550
+  val_every: 10
+  rollout_every: 5
+  min_rollout_epoch: 200
+  seed: 42
+  tqdm_interval_sec: 1.0
+
+validation:
+  batch_size: 8
+  num_workers: 1
+  shuffle: false
+
+logging:
+  project: dp3
+  resume: false
+  mode: online
+  name: ${name}_${task_name}_${run_name}_${now:%Y.%m.%d-%H.%M.%S}
+  tags: ["${name}", "${task_name}", "${run_name}"]
+  id: null
+  group: null
+
+
+checkpoint:
+  save_last_ckpt: true
+  save_last_snapshot: false
+  topk:
+    format_str: epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt
+    k: 5
+    mode: max
+    monitor_key: test_mean_score
+
+pretrained_model_path: ""
+
+hydra:
+    run:
+        dir: outputs/${name}_${task_name}/${run_name}
+
+experiment_log: null

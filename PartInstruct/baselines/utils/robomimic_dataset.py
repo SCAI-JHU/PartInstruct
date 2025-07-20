@@ -30,8 +30,7 @@ from diffusion_policy.common.normalize_util import (
     array_to_stats
 )
 import robomimic.utils.tensor_utils as TensorUtils
-from lgm_bc.encoders import T5Encoder
-import robomimic.utils.tensor_utils as TensorUtils
+from PartInstruct.baselines.utils.encoders import T5Encoder
 
 from filelock import FileLock, Timeout
 import time
@@ -307,27 +306,27 @@ def _convert_robomimic_to_replay(self, store, shape_meta, dataset_path, abs_acti
         # lang_encoder = T5Encoder()
 
         # save lowdim data
-        for key in tqdm(lowdim_keys + ['action'] + ['instructions'] , desc="Loading lowdim and language data"):
+        for key in tqdm(lowdim_keys + ['action'] + ['skill_instructions'] , desc="Loading lowdim and language data"):
             data_key = 'obs/' + key
             if key == 'action':
                 data_key = 'actions'
-            if key == 'instructions':
-                data_key = 'instructions'
+            if key == 'skill_instructions':
+                data_key = 'skill_instructions'
             this_data = list()
             for i in range(len(demos)):
                 demo = demos[f'demo_{i}']
                 data = demo[data_key][:]
-                # import ipdb; ipdb.set_trace()
-                if key == 'instructions':
-                    raw_text = [t.decode('utf-8') for t in demo['instructions'][:]]
+                if key == 'skill_instructions':
+                    raw_text = [t.decode('utf-8') for t in demo['skill_instructions'][:]]
                     text = list(set(raw_text))
                     encoded_text = [self.lang_encoder(t).detach().numpy() for t in text]
                     text_dict = dict(zip(text, encoded_text))
                     encoded_text = [text_dict[t] for t in raw_text]
-                    # import ipdb; ipdb.set_trace()
                     data = np.array(encoded_text, dtype=np.float32).squeeze(axis=1)
                 this_data.append(data.astype(np.float32))
             this_data = np.concatenate(this_data, axis=0)
+            if key == 'skill_instructions':
+                key = 'instructions'
             if key == 'action':
                 this_data = _convert_actions(
                     raw_actions=this_data,
@@ -361,9 +360,6 @@ def _convert_robomimic_to_replay(self, store, shape_meta, dataset_path, abs_acti
                 return False
         
         def add_channel_dim_if_needed(arr):
-            # # import ipdb; ipdb.set_trace()
-            # if arr.ndim == 2:  # If 2D (h, w)
-            #     return np.expand_dims(arr, axis=0)  # Add the channel dimension at axis 0
             arr.reshape(1, *arr.shape)
             return arr  # If already 3D, return as is
 
@@ -427,7 +423,6 @@ def _convert_robomimic_to_replay(self, store, shape_meta, dataset_path, abs_acti
                     for episode_idx in range(len(demos)):
                         demo = demos[f'demo_{episode_idx}']
                         hdf5_arr = demo['obs'][key]
-                        # import ipdb; ipdb.set_trace()
                         for hdf5_idx in range(hdf5_arr.shape[0] - 1):
                             if len(futures) >= max_inflight_tasks:
                                 # limit number of inflight tasks
@@ -455,12 +450,12 @@ def _convert_robomimic_to_replay(self, store, shape_meta, dataset_path, abs_acti
                 for key in pcd_keys:
                     data_key = 'obs/' + key
                     shape = tuple(shape_meta['obs'][key]['shape'])
-                    c,h,w = shape
+                    k, c = shape
                     this_compressor = zarr.Blosc(cname='zstd', clevel=5, shuffle=1)
                     img_arr = data_group.require_dataset(
                         name=key,
-                        shape=(n_steps,h,w,c),
-                        chunks=(1,h,w,c),
+                        shape=(n_steps,k,c),
+                        chunks=(1,k,c),
                         compressor=this_compressor,
                         dtype=np.float32
                     )

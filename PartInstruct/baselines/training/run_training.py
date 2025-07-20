@@ -1,48 +1,50 @@
-if __name__ == "__main__":
-    import sys
-    import os
-    import pathlib
-
-    ROOT_DIR = str(pathlib.Path(__file__).parent.parent.parent)
-    sys.path.append(ROOT_DIR)
-    os.chdir(ROOT_DIR)
-
 import os
+import sys
 import hydra
 import torch
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 import pathlib
 from torch.utils.data import DataLoader
 import copy
 import random
 import wandb
 import tqdm
+import json
 import numpy as np
 import shutil
+import concurrent.futures
 from torch.utils.data import DataLoader, random_split
 import robomimic.utils.obs_utils as ObsUtils
 from diffusion_policy.model.diffusion.ema_model import EMAModel
 from diffusion_policy.model.common.lr_scheduler import get_scheduler
-from diffusion_policy.dataset.base_dataset import BaseImageDataset
+# from diffusion_policy.dataset.base_dataset import BaseImageDataset
 
-from PartInstruct.baselines.policy.diffusion_policy import RobodiffUnetImagePolicy
 from PartInstruct.baselines.utils.robodiff_checkpoint_utils import TopKCheckpointManager
 from PartInstruct.baselines.utils.robodiff_json_logger import JsonLogger
 from PartInstruct.baselines.utils.robodiff_pytorch_utils import dict_apply, optimizer_to
 from PartInstruct.baselines.training.base_workspace import BaseWorkspace
-from PartInstruct.baselines.evaluation.env_runner.dp_env_runner import DPEnvRunner
-from PartInstruct.baselines.policy.diffusion_policy import RobodiffUnetImagePolicy
+
+from torch.distributed import init_process_group, destroy_process_group
+from torch.utils.data.distributed import DistributedSampler
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
-
-import os
 os.environ['HYDRA_FULL_ERROR'] = '1'
 
-class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
+def ddp_setup():
+    init_process_group(backend="nccl")
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+
+class TrainingWorkspace(BaseWorkspace):
     include_keys = ['global_step', 'epoch']
 
     def __init__(self, cfg: OmegaConf, output_dir=None):
         super().__init__(cfg, output_dir=output_dir)
+
+        # Comment this out to print to console
+        out_log_path = os.path.join(self.output_dir, 'output.log')
+        err_log_path = os.path.join(self.output_dir, 'error.log')
+        sys.stdout = open(out_log_path, 'w')
+        sys.stderr = open(err_log_path, 'w')
 
         # set seed
         seed = cfg.training.seed
@@ -53,9 +55,9 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
         ObsUtils.initialize_obs_utils_with_obs_specs({"obs": cfg.obs.modality})
 
         # configure model
-        self.model: RobodiffUnetImagePolicy = hydra.utils.instantiate(cfg.policy)
+        self.model = hydra.utils.instantiate(cfg.policy)
 
-        self.ema_model: RobodiffUnetImagePolicy = None
+        self.ema_model = None
         if cfg.training.use_ema:
             self.ema_model = copy.deepcopy(self.model)
 
@@ -69,25 +71,26 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
 
     def run(self):
         cfg = copy.deepcopy(self.cfg)
-
+        
         # resume training
-        if cfg.training.resume:
-            lastest_ckpt_path = self.get_checkpoint_path()
+        if cfg.training.resume.resume:
+            lastest_ckpt_path = pathlib.Path(cfg.training.resume.path).joinpath('checkpoints', str(cfg.training.resume.epoch), 'latest.ckpt')
             if lastest_ckpt_path.is_file():
                 print(f"Resuming from checkpoint {lastest_ckpt_path}")
                 self.load_checkpoint(path=lastest_ckpt_path)
 
         # configure dataset
-        dataset: BaseImageDataset
+        # dataset: BaseImageDataset
         dataset = hydra.utils.instantiate(cfg.dataset)
-        assert isinstance(dataset, BaseImageDataset)
-        train_dataloader = DataLoader(dataset, **cfg.dataloader)
+        # assert isinstance(dataset, BaseImageDataset)
+        sampler = DistributedSampler(dataset)
+        train_dataloader = DataLoader(dataset, sampler=sampler, **cfg.dataloader)
         normalizer = dataset.get_normalizer()
-
+        
         # configure validation dataset
         val_dataset = dataset.get_validation_dataset()
-        val_dataloader = DataLoader(val_dataset, **cfg.val_dataloader)
-
+        sampler = DistributedSampler(val_dataset)
+        val_dataloader = DataLoader(val_dataset, sampler=sampler, **cfg.val_dataloader)
         normalizer = dataset.get_normalizer()
 
         self.model.set_normalizer(normalizer)
@@ -115,26 +118,29 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                 model=self.ema_model)
 
 
-        # configure logging
-        wandb_run = wandb.init(
-            dir=str(self.output_dir),
-            config=OmegaConf.to_container(cfg, resolve=True),
-            **cfg.logging
-        )
-        wandb.config.update(
-            {
-                "output_dir": self.output_dir,
-            }
-        )
-
-        # configure checkpoint
-        topk_manager = TopKCheckpointManager(
-            save_dir=os.path.join(self.output_dir, 'checkpoints'),
-            **cfg.checkpoint.topk
-        )
-
         # device transfer
-        device = torch.device(cfg.training.device)
+        self.local_rank = int(os.environ["LOCAL_RANK"])
+        self.global_rank = int(os.environ["RANK"])
+
+        # configure logging
+        if self.global_rank == 0:
+            # wandb_run = wandb.init(
+            #     dir=str(self.output_dir),
+            #     config=OmegaConf.to_container(cfg, resolve=True),
+            #     **cfg.logging
+            # )
+            # wandb.config.update(
+            #     {
+            #         "output_dir": self.output_dir,
+            #     }
+            # )
+            # configure checkpoint
+            topk_manager = TopKCheckpointManager(
+                save_dir=os.path.join(self.output_dir, 'checkpoints'),
+                **cfg.checkpoint.topk
+            )
+
+        device = self.local_rank
         self.model.to(device)
         if self.ema_model is not None:
             self.ema_model.to(device)
@@ -166,14 +172,13 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                 with tqdm.tqdm(train_dataloader, desc=f"Training epoch {self.epoch}", 
                         leave=False, mininterval=cfg.training.tqdm_interval_sec) as tepoch:
                     for batch_idx, batch in enumerate(tepoch):
-                        # import ipdb; ipdb.set_trace()
                         # device transfer
                         batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
                         if train_sampling_batch is None:
                             train_sampling_batch = batch
 
                         # compute loss
-                        raw_loss = self.model.compute_loss(batch)
+                        raw_loss, loss_dict = self.model.compute_loss(batch)
                         loss = raw_loss / cfg.training.gradient_accumulate_every
                         loss.backward()
 
@@ -201,9 +206,10 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                         is_last_batch = (batch_idx == (len(train_dataloader)-1))
                         if not is_last_batch:
                             # log of last step is combined with validation and rollout
-                            wandb_run.log(step_log, step=self.global_step)
-                            json_logger.log(step_log)
-                            self.global_step += 1
+                            if self.global_rank == 0:
+                                # wandb_run.log(step_log, step=self.global_step)
+                                json_logger.log(step_log)
+                                self.global_step += 1
 
                         if (cfg.training.max_train_steps is not None) \
                             and batch_idx >= (cfg.training.max_train_steps-1):
@@ -220,19 +226,6 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                     policy = self.ema_model
                 policy.eval()
 
-                # # configure env
-                env_runner: BulletEnvRunner
-                env_runner = hydra.utils.instantiate(
-                    cfg.task.env_runner,
-                    output_dir=self.output_dir, epoch = self.epoch)
-                assert isinstance(env_runner, BulletEnvRunner)
-
-                # # run rollout
-                if (self.epoch % cfg.training.rollout_every) == 0:
-                    runner_log = env_runner.run(policy)
-                    # log all
-                    step_log.update(runner_log)
-
                 # run validation
                 if (self.epoch % cfg.training.val_every) == 0:
                     with torch.no_grad():
@@ -241,7 +234,7 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                                 leave=False, mininterval=cfg.training.tqdm_interval_sec) as tepoch:
                             for batch_idx, batch in enumerate(tepoch):
                                 batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
-                                loss = self.model.compute_loss(batch)
+                                loss, loss_dict = self.model.compute_loss(batch)
                                 val_losses.append(loss)
                                 if (cfg.training.max_val_steps is not None) \
                                     and batch_idx >= (cfg.training.max_val_steps-1):
@@ -250,7 +243,6 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                             val_loss = torch.mean(torch.tensor(val_losses)).item()
                             # log epoch average validation loss
                             step_log['val_loss'] = val_loss
-                            step_log['test_mean_score'] = 1.0/val_loss
 
                 # run diffusion sampling on a training batch
                 if (self.epoch % cfg.training.sample_every) == 0:
@@ -260,7 +252,6 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                         obs_dict = batch['obs']
                         obs_dict['instructions'] = batch['obs']['instructions']
                         gt_action = batch['action']
-                        
                         result = policy.predict_action(obs_dict)
                         pred_action = result['action_pred']
                         mse = torch.nn.functional.mse_loss(pred_action, gt_action)
@@ -271,45 +262,51 @@ class TrainRobodiffUnetImageWorkspace(BaseWorkspace):
                         del result
                         del pred_action
                         del mse
-                
-                # checkpoint
-                if (self.epoch % cfg.training.checkpoint_every) == 0:
-                    # checkpointing
-                    if cfg.checkpoint.save_last_ckpt:
-                        self.save_checkpoint()
-                    if cfg.checkpoint.save_last_snapshot:
-                        self.save_snapshot()
+
+                # if env_runner is None:
+                step_log['test_mean_score'] = - train_loss
+                if self.global_rank == 0:
+                    # checkpoint
+                    if (self.epoch % cfg.training.checkpoint_every) == 0:
+                        if cfg.checkpoint.save_last_ckpt:
+                            save_path = pathlib.Path(self.output_dir).joinpath('checkpoints', str(self.epoch), 'latest.ckpt')
+                            self.save_checkpoint(path=save_path)
+                        if cfg.checkpoint.save_last_snapshot:
+                            self.save_snapshot()
 
                     # sanitize metric names
-                    metric_dict = dict()
-                    for key, value in step_log.items():
-                        new_key = key.replace('/', '_')
-                        metric_dict[new_key] = value
-                    
-                    # We can't copy the last checkpoint here
-                    # since save_checkpoint uses threads.
-                    # therefore at this point the file might have been empty!
-                    topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
-
-                    if topk_ckpt_path is not None:
-                        self.save_checkpoint(path=topk_ckpt_path)
-                # ========= eval end for this epoch ==========
+                        metric_dict = dict()
+                        for key, value in step_log.items():
+                            new_key = key.replace('/', '_')
+                            metric_dict[new_key] = value
+                        
+                        # We can't copy the last checkpoint here
+                        # since save_checkpoint uses threads.
+                        # therefore at this point the file might have been empty!
+                        topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
+                        if topk_ckpt_path is not None:
+                            self.save_checkpoint(path=topk_ckpt_path)
+                
+                # # ========= eval end for this epoch ==========
                 policy.train()
 
                 # end of epoch
                 # log of last step is combined with validation and rollout
-                wandb_run.log(step_log, step=self.global_step)
-                json_logger.log(step_log)
+                if self.global_rank == 0:
+                    # wandb_run.log(step_log, step=self.global_step)
+                    json_logger.log(step_log)
                 self.global_step += 1
                 self.epoch += 1
 
 @hydra.main(
     version_base=None,
-    config_path=str(pathlib.Path(__file__).parent.parent.joinpath("config")), 
+    config_path=str(pathlib.Path(__file__).parent.joinpath("config")), 
     config_name=pathlib.Path(__file__).stem)
 def main(cfg):
-    workspace = TrainRobodiffUnetImageWorkspace(cfg)
+    ddp_setup()
+    workspace = TrainingWorkspace(cfg)
     workspace.run()
+    destroy_process_group()
 
 if __name__ == "__main__":
     main()

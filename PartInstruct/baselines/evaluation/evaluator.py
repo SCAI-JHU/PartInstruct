@@ -8,7 +8,6 @@ import json
 import time
 import re
 from omegaconf import OmegaConf
-from PartInstruct.baselines.policy.diffusion_policy import RobodiffUnetImagePolicy
 from PartInstruct.baselines.training.base_workspace import BaseWorkspace
 from hydra.core.global_hydra import GlobalHydra
 
@@ -24,8 +23,8 @@ class Evaluator(BaseWorkspace):
         self.dataset_meta_path = os.path.join(str(cfg.data_root), str(cfg.meta_path))
         print("##### Using dataset meta file from:", self.dataset_meta_path)
         
-        self.model: RobodiffUnetImagePolicy = hydra.utils.instantiate(cfg.policy)
-        self.ema_model: RobodiffUnetImagePolicy = None
+        self.model = hydra.utils.instantiate(cfg.policy)
+        self.ema_model = None
         if cfg.training.use_ema:
             self.ema_model = copy.deepcopy(self.model)
         self.optimizer = hydra.utils.instantiate(cfg.optimizer, params=self.model.parameters())
