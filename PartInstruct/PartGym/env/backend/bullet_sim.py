@@ -624,7 +624,7 @@ def _build_intrinsic_from_proj_matrix(proj_matrix, img_width, img_height):
 def save_image(image_path, image_data):
     cv2.imwrite(image_path, image_data)
 
-def _save_npz(file_path, data):
+def save_npz(file_path, data):
     np.savez_compressed(file_path, data)
 
 def save_depth(file_path, data, depth_scale=1000.0):
