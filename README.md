@@ -18,6 +18,7 @@ We introduce **PartInstruct**, the first large-scale benchmark for training and 
 ```bash
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
+git submodule sync --recursive
 
 conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
 conda activate partinstruct
