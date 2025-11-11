@@ -59,9 +59,8 @@ class RobomimicReplayImageDataset(BaseImageDataset):
         if use_cache:
             cache_zarr_path = dataset_path + '.zarr.zip'
             cache_lock_path = cache_zarr_path + '.lock'
-            print('Acquiring lock on cache !!!!')
+            print('Acquiring lock on cache')
             with FileLock(cache_lock_path):
-                print('Acquiring lock on cache ???')
                 if not os.path.exists(cache_zarr_path):
                     # cache does not exists
                     try:
@@ -115,9 +114,6 @@ class RobomimicReplayImageDataset(BaseImageDataset):
                 text_keys.append(key)
             elif type == 'pcd':
                 pcd_keys.append(key)
-        
-        # for key in rgb_keys:
-        #     replay_buffer[key].compressor.numthreads=1
 
         key_first_k = dict()
         if n_obs_steps is not None:

@@ -41,10 +41,10 @@ class TrainingWorkspace(BaseWorkspace):
         super().__init__(cfg, output_dir=output_dir)
 
         # Comment this out to print to console
-        out_log_path = os.path.join(self.output_dir, 'output.log')
-        err_log_path = os.path.join(self.output_dir, 'error.log')
-        sys.stdout = open(out_log_path, 'w')
-        sys.stderr = open(err_log_path, 'w')
+        # out_log_path = os.path.join(self.output_dir, 'output.log')
+        # err_log_path = os.path.join(self.output_dir, 'error.log')
+        # sys.stdout = open(out_log_path, 'w')
+        # sys.stderr = open(err_log_path, 'w')
 
         # set seed
         seed = cfg.training.seed
@@ -178,7 +178,8 @@ class TrainingWorkspace(BaseWorkspace):
                             train_sampling_batch = batch
 
                         # compute loss
-                        raw_loss, loss_dict = self.model.compute_loss(batch)
+                        raw_loss = self.model.compute_loss(batch)
+                        raw_loss = raw_loss[0] if isinstance(raw_loss, tuple) else raw_loss
                         loss = raw_loss / cfg.training.gradient_accumulate_every
                         loss.backward()
 
@@ -234,7 +235,8 @@ class TrainingWorkspace(BaseWorkspace):
                                 leave=False, mininterval=cfg.training.tqdm_interval_sec) as tepoch:
                             for batch_idx, batch in enumerate(tepoch):
                                 batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
-                                loss, loss_dict = self.model.compute_loss(batch)
+                                loss = self.model.compute_loss(batch)
+                                loss = loss[0] if isinstance(loss, tuple) else loss
                                 val_losses.append(loss)
                                 if (cfg.training.max_val_steps is not None) \
                                     and batch_idx >= (cfg.training.max_val_steps-1):

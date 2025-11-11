@@ -1,5 +1,5 @@
 __pycache__/
-/data
+data/
 *.mp4
 *.hdf5
 *.png

@@ -94,7 +94,7 @@ policy:
   use_language: true
   use_part_mask: False
 
-dataset_path: &dataset_path /home/yfang52/scratch/zhan47/data/mug_simple.hdf5
+dataset_path: &dataset_path 'your_path.hdf5'
 abs_action: &abs_action False
 
 dataset:

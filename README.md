@@ -49,6 +49,8 @@ huggingface-cli login
 Enter your password. You can now download the assets. The following commands download and set up the assets under a created data/ directory.
 
 ```bash
+cd ./PartInstruct
+
 huggingface-cli download SCAI-JHU/PartInstruct --repo-type dataset --local-dir ./data --include "*.json" "assets.zip" "checkpoints/**" 
 #To download PartInstruct dataset in hdf5 format, add "demos/**" for all demo, "demos/OBJECT_NAME.hdf5" for demo of specific object type
 
@@ -81,8 +83,9 @@ python scripts/run_code_as_policies.py
 ### Train Baselines
 ```bash
 # After downloading dataset, run 
-bash /scripts/slurm_scripts/train_DP3.sh
-# to start DDP training of DP3 baseline
+bash scripts/slurm_scripts/train_DP3.sh
+bash scripts/slurm_scripts/train_DP3.sh
+# to start DDP training of DP3/DP baseline
 ```
 
 ### Evaluate Bi-level Planners

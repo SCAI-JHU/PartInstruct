@@ -261,7 +261,7 @@ class VisLangObsEncoder(nn.Module):
                 img = self.key_transform_map[key](img)
                 feature = self.key_model_map[key](img)
                 features.append(feature)
-        # import ipdb; ipdb.set_trace()
+        
         # process lowdim input
         for key in self.low_dim_keys:
             data = obs_dict[key]
@@ -269,10 +269,9 @@ class VisLangObsEncoder(nn.Module):
                 batch_size = data.shape[0]
             else:
                 assert batch_size == data.shape[0]
-            # import ipdb; ipdb.set_trace()
             assert data.shape[1:] == self.key_shape_map[key]
             features.append(data)
-        # import ipdb; ipdb.set_trace()
+        
         # process language input
         for key in self.lang_keys:
             # print("key", key)
@@ -283,13 +282,10 @@ class VisLangObsEncoder(nn.Module):
             else:
                 assert batch_size == data.shape[0]
             assert data.shape[1:] == self.key_shape_map[key]
-            # print("feature", feature)
-            # import ipdb; ipdb.set_trace()
             features.append(data)
 
         # concatenate all features
         result = torch.cat(features, dim=-1)
-        # import ipdb; ipdb.set_trace()
         return result
     
     @torch.no_grad()
@@ -588,8 +584,6 @@ class VisLangObsMaskEncoder(nn.Module):
             # run each mask obs to independent models
             for key in self.mask_keys:
                 mask = obs_dict[key]
-                # mask =  mask.unsqueeze(2)
-                # import ipdb; ipdb.set_trace()
                 if batch_size is None:
                     batch_size = mask.shape[0]
                 else:
@@ -599,7 +593,6 @@ class VisLangObsMaskEncoder(nn.Module):
                 feature = self.key_model_map[key](mask)
                 features.append(feature)
 
-        # import ipdb; ipdb.set_trace()
         # process lowdim input
         for key in self.low_dim_keys:
             data = obs_dict[key]
@@ -607,10 +600,10 @@ class VisLangObsMaskEncoder(nn.Module):
                 batch_size = data.shape[0]
             else:
                 assert batch_size == data.shape[0]
-            # import ipdb; ipdb.set_trace()
+            
             assert data.shape[1:] == self.key_shape_map[key]
             features.append(data)
-        # import ipdb; ipdb.set_trace()
+        
         # process language input
         for key in self.lang_keys:
             # print("key", key)
@@ -622,12 +615,12 @@ class VisLangObsMaskEncoder(nn.Module):
                 assert batch_size == data.shape[0]
             assert data.shape[1:] == self.key_shape_map[key]
             # print("feature", feature)
-            # import ipdb; ipdb.set_trace()
+            
             features.append(data)
 
         # concatenate all features
         result = torch.cat(features, dim=-1)
-        # import ipdb; ipdb.set_trace()
+        
         return result
 
     @torch.no_grad()
@@ -686,10 +679,7 @@ class VisLangObsImageEncoder(nn.Module):
             key_model_map['mask'] = image_encoder
 
         obs_shape_meta = shape_meta['obs']
-        value_to_replace = obs_shape_meta['agentview_part_mask']
-        obs_shape_meta['agentview_mask'] = value_to_replace
-        del obs_shape_meta['agentview_part_mask']
-        # import ipdb; ipdb.set_trace()
+
         for key, attr in obs_shape_meta.items():
             shape = tuple(attr['shape'])
             type = attr.get('type', 'low_dim')
@@ -697,7 +687,7 @@ class VisLangObsImageEncoder(nn.Module):
             if type == 'rgb':
                 key_prefix = key.split('_')[0]
                 paired_mask_key = [k for k in obs_shape_meta.keys() if k.startswith(key_prefix) and k.endswith('mask')][0]
-                # import ipdb; ipdb.set_trace()
+                
                 rgb_keys.append(key)
                 mask_keys.append(paired_mask_key)
                 # configure model for this key
@@ -799,7 +789,6 @@ class VisLangObsImageEncoder(nn.Module):
         return next(iter(self.parameters())).dtype
 
     def forward(self, obs_dict):
-        # print("!!!! obs_dict", obs_dict)
         batch_size = None
         features = list()
         # process rgb input
@@ -814,7 +803,6 @@ class VisLangObsImageEncoder(nn.Module):
                 # stack rgb and mask
                 masks = mask.repeat(1, 2, 1, 1)
                 img = torch.cat([rgb, masks], dim=1)
-                # import ipdb; ipdb.set_trace()
                 if batch_size is None:
                     batch_size = img.shape[0]
                 else:
@@ -844,18 +832,15 @@ class VisLangObsImageEncoder(nn.Module):
                 # stack rgb and mask
                 masks = mask.repeat(1, 2, 1, 1)
                 img = torch.cat([rgb, masks], dim=1)
-                # import ipdb; ipdb.set_trace()
                 if batch_size is None:
                     batch_size = img.shape[0]
                 else:
                     assert batch_size == img.shape[0]
                 assert rgb.shape[1:] == self.key_shape_map[key]
                 assert mask.shape[1:] == self.key_shape_map[paired_mask_key]
-                img = self.key_transform_map[key](img)
-                # import ipdb; ipdb.set_trace()
+                img = self.key_transform_map[key](img) 
                 feature = self.key_model_map[key](img)
                 features.append(feature)
-        # import ipdb; ipdb.set_trace()
         # process lowdim input
         for key in self.low_dim_keys:
             data = obs_dict[key]
@@ -863,10 +848,10 @@ class VisLangObsImageEncoder(nn.Module):
                 batch_size = data.shape[0]
             else:
                 assert batch_size == data.shape[0]
-            # import ipdb; ipdb.set_trace()
+            
             assert data.shape[1:] == self.key_shape_map[key]
             features.append(data)
-        # import ipdb; ipdb.set_trace()
+        
         # process language input
         for key in self.lang_keys:
             # print("key", key)
@@ -877,13 +862,11 @@ class VisLangObsImageEncoder(nn.Module):
             else:
                 assert batch_size == data.shape[0]
             assert data.shape[1:] == self.key_shape_map[key]
-            # print("feature", feature)
-            # import ipdb; ipdb.set_trace()
             features.append(data)
 
         # concatenate all features
         result = torch.cat(features, dim=-1)
-        # import ipdb; ipdb.set_trace()
+        
         return result
     
     @torch.no_grad()
