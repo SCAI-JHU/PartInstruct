@@ -679,6 +679,8 @@ class VisLangObsImageEncoder(nn.Module):
             key_model_map['mask'] = image_encoder
 
         obs_shape_meta = shape_meta['obs']
+        value_to_replace = obs_shape_meta['agentview_part_mask']
+        obs_shape_meta['agentview_mask'] = value_to_replace
 
         for key, attr in obs_shape_meta.items():
             shape = tuple(attr['shape'])
@@ -828,6 +830,7 @@ class VisLangObsImageEncoder(nn.Module):
                 key_prefix = key.split('_')[0]
                 paired_mask_key = [k for k in self.mask_keys if k.startswith(key_prefix)][0]
                 rgb = obs_dict[key]
+                paired_mask_key = 'agentview_part_mask' if 'agentview_part_mask' in obs_dict.keys() else 'agentview_mask'
                 mask = obs_dict[paired_mask_key]
                 # stack rgb and mask
                 masks = mask.repeat(1, 2, 1, 1)

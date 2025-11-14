@@ -19,11 +19,12 @@ We introduce **PartInstruct**, the first large-scale benchmark for training and 
 git clone --recurse-submodules https://github.com/SCAI-JHU/PartInstruct.git
 cd PartInstruct
 git submodule sync --recursive
+git submodule update --init --recursive
 
 conda create -n partinstruct -c conda-forge python=3.9 cmake=3.24.3 open3d ninja gcc_linux-64=12 gxx_linux-64=12
 conda activate partinstruct
 
-pip3 install torch torchvision torchaudio
+pip install torch torchvision torchaudio
 ```
 
 Install third-party
@@ -36,7 +37,7 @@ pip install -e ./third_party/pybullet_planning/
 pip install -e ./third_party/diffusion_policy/
 pip install -e ./third_party/3D-Diffusion-Policy/
 pip install -e ./third_party/gym-0.21.0/
-pip install -e ./third_party/pytorch3d_simplified/
+pip install -e ./third_party/pytorch3d/
 pip install -e ./third_party/sam_2/
 ```
 
