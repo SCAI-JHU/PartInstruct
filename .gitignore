@@ -19,4 +19,3 @@ output/
 *.egg*
 *.so
 .DS_Store
-third_party/
